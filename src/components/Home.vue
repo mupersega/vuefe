@@ -1,26 +1,9 @@
-<script>
+<script setup lang="ts">
 </script>
 
 <template>
   <div class="home-wrapper">
     <h1>mupersega<span class="accent">.eve</span></h1>
-    <p>
-      This is a simple app to manage many parts of your Eve Online game experience.
-    </p>
-    <p>
-      I am a solo industrialist and in developing this app to streamline and manage my own activites,
-      I hope help others also.
-    </p>
-    <section>
-      <h2>features</h2>
-      <ul>
-        <li>item lookup</li>
-      </ul>
-      <h2>roadmap</h2>
-      <ul>
-        <li>materials calculator</li>
-      </ul>
-    </section>
   </div>
 </template>
 <style scoped>
@@ -53,14 +36,9 @@ main vars
     align-items: center;
     justify-content: center;
     gap: 1rem;
-    padding: 2rem;
+    /* padding: 2rem; */
     color: var(--jet);
     height: 100%;
-  }
-  h1 {
-    color: var(--eerie-black);
-    font-size: 2rem;
-    margin-bottom: 1rem;
   }
 
   p {

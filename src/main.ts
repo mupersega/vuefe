@@ -3,14 +3,15 @@ import { createPinia } from 'pinia'
 import { createMemoryHistory, createRouter } from 'vue-router'
 
 import './style.css'
+import './services/apiService'; // Import for side effects (initialization)
 
 import App from './App.vue'
-import Counter from './components/Counter.vue'
 import Home from './components/Home.vue'
+import Lookup from './components/Lookup.vue'
 
 const routes = [
     { path: '/', component: Home },
-    { path: '/counter', component: Counter },
+    { path: '/lookup', component: Lookup },
 ]
 
 const router = createRouter({

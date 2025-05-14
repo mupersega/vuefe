@@ -16,6 +16,16 @@
   --flame: #eb5e28ff;
   --burnt-sienna: #ed6d3cff;
 
+  --translucent-white-02: hsla(0, 0%, 100%, 0.02);
+  --translucent-white-03: #ffffff08;
+  --translucent-white-04: #ffffff0a;
+  --translucent-white-05: #ffffff0b;
+  --translucent-white-1: #ffffff1a;
+  --translucent-white-2: #ffffff2a;
+  --translucent-white-3: #ffffff3a;
+
+  --top-bar-height: 3.5rem;
+
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -34,6 +44,39 @@ body {
  height: 100vh;
  width: 100vw;
  overflow: hidden;
+ font-size: 14px
+}
+
+/* h tags */
+h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+h3 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+h4 {
+  font-size: 1rem;
+  font-weight: 400;
+  margin-bottom: 0.5rem;
+}
+h5 {
+  font-size: 0.875rem;
+  font-weight: 400;
+  margin-bottom: 0.5rem;
+}
+h6 {
+  font-size: 0.75rem;
+  font-weight: 400;
+  margin-bottom: 0.5rem;
 }
 
 a {
@@ -52,6 +95,7 @@ button {
   background-color: transparent;
 }
 
+/* 
 @media (prefers-color-scheme: light) {
   :root {
     color: var(--black-olive);
@@ -63,4 +107,4 @@ button {
   button {
     background-color: #f9f9f9;
   }
-}
+} */
