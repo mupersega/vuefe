@@ -26,7 +26,8 @@ const navItems: NavLinkProps[] = [ // Use NavLinkProps here
             mu
           </span>
         </div>
-        <span class="accent">.eve</span>
+        <span v-if="navExpanded" class="accent second">.eve</span>
+        <span v-else="navExpanded" class="accent second">.eve</span>
       </div>
       <div class="links">
         <NavLink v-for="item in navItems" :key="item.to" :to="item.to" :icon="item.icon" :text="item.text"
@@ -51,6 +52,7 @@ nav {
   outline-offset: 0px;
   background-color: #ffffff05;
   z-index: 1;
+  box-shadow: 0 0 3px 1px var(--night);
 
   &:hover {
     background-color: #ffffff08;
@@ -67,7 +69,7 @@ nav.expanded {
 }
 
 nav:not(.expanded) {
-  width: 3.5rem;
+  width: var(--sidebar-width-compressed);
 
   .expander:hover {
     color: var(--flame);
@@ -82,10 +84,10 @@ nav:not(.expanded) {
   font-size: 0.6rem;
   font-weight: bold;
   color: var(--silver);
-  background-color: var(--night);
+  background-color: var(--mid-night);
   height: var(--top-bar-height);
   width: 100%;
-
+  position: relative;
 }
 
 .accent {
@@ -123,7 +125,15 @@ nav:not(.expanded) {
 
 .first {
   opacity: 1;
-  transition: opacity 0.5s 0.2s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+  transition: opacity 0.3s 0.2s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+  @starting-style {
+    opacity: 0;
+  }
+}
+
+.second {
+  opacity: 1;
+  transition: opacity 0.2s 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.0);
   @starting-style {
     opacity: 0;
   }

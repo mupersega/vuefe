@@ -1,5 +1,6 @@
 <template>
   <div class="app-container">
+    <!-- <Tex /> -->
     <AppNav />
     <main>
       <RouterView />
@@ -8,30 +9,11 @@
 </template>
 
 <script setup lang="ts">
-  import AppNav from './components/AppNav/AppNav.vue';
+  import AppNav from './components/pages/base/AppNav/AppNav.vue';
+  // import Tex from './components/Tex.vue';
 </script>
 
 <style scoped>
-/* 
-main vars
-  --white: #ffffffff;
-  --platinum: #e1e0dcff;
-  --silver: #b0ada7ff;
-  --gray: #7e7a72ff;
-  --jet: #302e2bff;
-  --eerie-black: #201f1dff;
-  --night: #0b0a0aff;
-  --flame: #eb5e28ff;
-  --burnt-sienna: #ed6d3cff;  --white: #ffffffff;
-  --platinum: #e1e0dcff;
-  --silver: #b0ada7ff;
-  --gray: #7e7a72ff;
-  --jet: #302e2bff;
-  --eerie-black: #201f1dff;
-  --night: #0b0a0aff;
-  --flame: #eb5e28ff;
-  --burnt-sienna: #ed6d3cff;
-*/
   .app-container {
     display: grid;
     grid-template-columns: min-content 3fr;
@@ -46,6 +28,7 @@ main vars
     grid-area: main;
     display: flex;
     flex-direction: column;
+    position: relative;
     /* background-color: var(--white); */
   }
 

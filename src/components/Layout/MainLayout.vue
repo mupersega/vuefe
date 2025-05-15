@@ -30,7 +30,7 @@ defineProps({
 }
 .layout-main-wrapper .top-bar {
     width: 100%;
-    background-color: var(--night);
+    /* background-color: var(--mid-night); */
     height: var(--top-bar-height);
 }
 .layout-main-wrapper .main-content {

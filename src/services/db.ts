@@ -32,7 +32,7 @@ async function seed() {
     }
 }
 
-function searchInvTypeShorts(
+function searchInvTypeShortsStartsWith(
   search: string,
   limit: number
 ): Promise<InvTypeShortDto[]> {
@@ -43,4 +43,19 @@ function searchInvTypeShorts(
     .toArray();
 }
 
-export { db, searchInvTypeShorts };
+function searchInvTypeShortsContains(
+  search: string,
+  limit: number
+): Promise<InvTypeShortDto[]> {
+  const lowerSearch = search.toLowerCase();
+
+  return db.invTypeShorts
+    .toArray()
+    .then((items) =>
+      items
+        .filter(item => item.typeName?.toLowerCase().includes(lowerSearch))
+        .slice(0, limit)
+    );
+}
+
+export { db, searchInvTypeShortsStartsWith, searchInvTypeShortsContains };
