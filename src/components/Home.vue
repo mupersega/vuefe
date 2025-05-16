@@ -7,26 +7,6 @@
   </div>
 </template>
 <style scoped>
-/* 
-main vars
-  --white: #ffffffff;
-  --platinum: #e1e0dcff;
-  --silver: #b0ada7ff;
-  --gray: #7e7a72ff;
-  --jet: #302e2bff;
-  --eerie-black: #201f1dff;
-  --night: #0b0a0aff;
-  --flame: #eb5e28ff;
-  --burnt-sienna: #ed6d3cff;  --white: #ffffffff;
-  --platinum: #e1e0dcff;
-  --silver: #b0ada7ff;
-  --gray: #7e7a72ff;
-  --jet: #302e2bff;
-  --eerie-black: #201f1dff;
-  --night: #0b0a0aff;
-  --flame: #eb5e28ff;
-  --burnt-sienna: #ed6d3cff;
-*/
   .accent {
     color: var(--flame);
   }
@@ -36,7 +16,6 @@ main vars
     align-items: center;
     justify-content: center;
     gap: 1rem;
-    /* padding: 2rem; */
     color: var(--jet);
     height: 100%;
   }

@@ -1,17 +1,16 @@
 <script setup lang="ts">
-import NavLink, { type NavLinkProps } from './components/NavLink.vue'; // Import NavLinkProps
+import NavLink, { type NavLinkProps } from './NavLink.vue';
 import { ref } from 'vue';
 
 const navExpanded = ref(false);
 
-const navItems: NavLinkProps[] = [ // Use NavLinkProps here
+const navItems: NavLinkProps[] = [
   { to: "/", icon: ['fas', 'house'], text: "Home" },
-  { to: "/lookup", icon: ['fas', 'magnifying-glass'], text: "Lookup" },
-  { to: "/sdf", icon: ['fas', 'magnifying-glass'], text: "Lookup" },
-  { to: "/af", icon: ['fas', 'magnifying-glass'], text: "Lookup" },
-  { to: "/wef", icon: ['fas', 'magnifying-glass'], text: "Lookup" },
-  { to: "/awefsd", icon: ['fas', 'magnifying-glass'], text: "Lookup" },
-
+  { to: "/draft", icon: ['fas', 'compass-drafting'], text: "Draft" },
+  { to: "/work", icon: ['fas', 'industry'], text: "Work" },
+  { to: "/sdf", icon: ['fas', 'sliders'], text: "Lookup" },
+  { to: "/awefsd", icon: ['fas', 'users'], text: "Character" },
+  { to: "/explore", icon: ['fas', 'book'], text: "Library" },
 ];
 </script>
 <template>
@@ -19,12 +18,8 @@ const navItems: NavLinkProps[] = [ // Use NavLinkProps here
     <div class="actions">
       <div class="nav-top-spacer">
         <div class="faded">
-          <span v-if="navExpanded" class="first">
-            mupersega
-          </span>
-          <span v-else class="first">
-            mu
-          </span>
+          <span v-if="navExpanded" class="first">mupersega</span>
+          <span v-else class="first">mu</span>
         </div>
         <span v-if="navExpanded" class="accent second">.eve</span>
         <span v-else="navExpanded" class="accent second">.eve</span>

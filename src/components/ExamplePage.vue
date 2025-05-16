@@ -10,5 +10,5 @@
 </template>
 
 <script setup lang="ts">
-import MainLayout from './Layout/MainLayout.vue';
+import MainLayout from './MainLayout.vue';
 </script>

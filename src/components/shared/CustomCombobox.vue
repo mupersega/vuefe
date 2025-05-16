@@ -160,7 +160,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="custom-combobox-wrapper" @focusout="hideDropdownDelayed">
+  <div class="me-combobox" @focusout="hideDropdownDelayed">
     <input
       ref="inputRef"
       type="text"
@@ -203,7 +203,7 @@ defineExpose({
 </template>
 
 <style scoped>
-.custom-combobox-wrapper {
+.me-combobox-wrapper {
   position: relative;
   width: 100%;
   border-left: 1px solid var(--gray);

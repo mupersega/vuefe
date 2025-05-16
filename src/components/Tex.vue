@@ -173,7 +173,7 @@ onBeforeUnmount(() => {
     position: absolute;
     top: 0;
     left: 0;
-    z-index: -1;
-    background:  transparent;
+    /* z-index: -1; */
+    background: transparent;
 }
 </style>
