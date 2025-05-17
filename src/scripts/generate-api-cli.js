@@ -14,7 +14,7 @@ const __dirname = dirname(__filename);
 const projectRoot = resolve(__dirname, '..', '..');
 
 // Default parameters
-const defaultPort = '5428';
+const defaultPort = '5248';
 const defaultHost = 'localhost';
 const outputDir = resolve(projectRoot, 'src/api-client');
 

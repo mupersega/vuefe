@@ -13,6 +13,24 @@
  */
 
 
-export * from "./api";
-export * from "./configuration";
-export * from "./models";
+
+/**
+ * 
+ * @export
+ * @interface InvTypeShortDto
+ */
+export interface InvTypeShortDto {
+    /**
+     * 
+     * @type {number}
+     * @memberof InvTypeShortDto
+     */
+    'typeId': number;
+    /**
+     * 
+     * @type {string}
+     * @memberof InvTypeShortDto
+     */
+    'typeName': string | null;
+}
+

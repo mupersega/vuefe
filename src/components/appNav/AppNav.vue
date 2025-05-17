@@ -11,6 +11,7 @@ const navItems: NavLinkProps[] = [
   { to: "/sdf", icon: ['fas', 'sliders'], text: "Lookup" },
   { to: "/awefsd", icon: ['fas', 'users'], text: "Character" },
   { to: "/explore", icon: ['fas', 'book'], text: "Library" },
+  { to: "/admin", icon: ['fas', 'shield-cat'], text: "Library" },
 ];
 </script>
 <template>

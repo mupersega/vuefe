@@ -1,7 +1,7 @@
 import { createApp } from 'vue'
-import { registerIcons } from './scripts/setup/icons'
-import { registerStore } from './scripts/setup/pinia'
-import { registerRouter } from './scripts/setup/router'
+import { registerIcons } from './lib/setup/icons'
+import { registerStore } from './lib/setup/pinia'
+import { registerRouter } from './lib/setup/router'
 
 import './style.css'
 import './services/apiService'

@@ -20,11 +20,11 @@ const toggleSwitch = () => {
 
 <template>
   <button type="button" class="me-switch" :class="switchClass" @click="toggleSwitch">
-    <span :class="{ 'text-active': !modelValue }">{{ leftLabel || 'Off' }}</span>
+    <span :class="{ 'text-active': modelValue }">{{ leftLabel || 'Off' }}</span>
     <div class="switch-outer">
-      <div class="switch-inner" :class="{ 'switch-inner-active': modelValue }"></div>
+      <div class="switch-inner" :class="{ 'switch-inner-active': !modelValue }"></div>
     </div>
-    <span :class="{ 'text-active': modelValue }">{{ rightLabel || 'On' }}</span>
+    <span :class="{ 'text-active': !modelValue }">{{ rightLabel || 'On' }}</span>
   </button>
 </template>
 
