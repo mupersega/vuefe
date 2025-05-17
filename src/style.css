@@ -1,4 +1,4 @@
-@import './utils.css';
+@import './style/utils.css';
 
 /*  reset */
 * {
@@ -43,7 +43,7 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
+/* 
 body {
  height: 100vh;
  width: 100vw;
@@ -51,7 +51,6 @@ body {
  font-size: 14px
 }
 
-/* h tags */
 h1 {
   font-size: 2rem;
   font-weight: 700;
@@ -91,6 +90,7 @@ a {
 a:hover {
   color: var(--flame);
 }
+*/
 button {
   border: none;
   cursor: pointer;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, watch } from 'vue';
 import type { PropType } from 'vue';
 
 interface ComboboxItem {
@@ -30,7 +30,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:modelValue', 'select']);
+const emit = defineEmits(['update:modelValue', 'select', 'input']);
 
 const inputValue = ref(props.modelValue);
 const isDropdownVisible = ref(false);
@@ -43,22 +43,11 @@ watch(() => props.modelValue, (newValue) => {
   }
 });
 
-const filteredItems = computed(() => {
-  if (!inputValue.value) {
-    // When input is empty, show no items, or all items if you prefer.
-    // For a search/lookup, typically show no items until user types.
-    return [];
-  }
-  const searchTerm = inputValue.value.toLowerCase();
-  return props.items.filter(item =>
-    String(item[props.labelField]).toLowerCase().includes(searchTerm)
-  );
-});
-
 function handleInput(event: Event) {
   const target = event.target as HTMLInputElement;
   inputValue.value = target.value;
   emit('update:modelValue', inputValue.value);
+  emit('input', inputValue.value); // Additional event for more flexibility
   isDropdownVisible.value = true;
   highlightedIndex.value = -1; // Reset highlight when input changes
 }
@@ -76,15 +65,10 @@ function handleKeyDown(event: KeyboardEvent) {
     case 'ArrowDown':
       event.preventDefault();
       if (!isDropdownVisible.value) {
-        // If the dropdown is closed, try to open it.
-        // showDropdown() will set isDropdownVisible to true if filteredItems has content.
         showDropdown(); 
-        if (isDropdownVisible.value) { // If it was successfully opened
-          highlightedIndex.value = 0; // Highlight the first item
-        }
       } else {
         // Dropdown is already visible, navigate down the list
-        if (highlightedIndex.value < filteredItems.value.length - 1) {
+        if (highlightedIndex.value < props.items.length - 1) {
           highlightedIndex.value++;
         } else {
           highlightedIndex.value = 0; // Loop to top
@@ -97,17 +81,14 @@ function handleKeyDown(event: KeyboardEvent) {
       if (highlightedIndex.value > 0) {
         highlightedIndex.value--;
       } else {
-        highlightedIndex.value = filteredItems.value.length - 1; // Loop to bottom
+        highlightedIndex.value = props.items.length - 1; // Loop to bottom
       }
       scrollToHighlightedItem();
       break;
     case 'Enter':
       event.preventDefault();
-      if (highlightedIndex.value >= 0 && filteredItems.value[highlightedIndex.value]) {
-        selectItem(filteredItems.value[highlightedIndex.value]);
-      } else if (inputValue.value && filteredItems.value.length > 0) {
-        // If user typed something that matches, but didn't navigate, select first match
-        // Or, allow free text entry if no match is highlighted (current behavior)
+      if (highlightedIndex.value >= 0 && props.items[highlightedIndex.value]) {
+        selectItem(props.items[highlightedIndex.value]);
       }
       isDropdownVisible.value = false;
       break;
@@ -116,14 +97,14 @@ function handleKeyDown(event: KeyboardEvent) {
       highlightedIndex.value = -1;
       break;
     case 'Tab':
-      // Allow tab to function normally, potentially closing dropdown if desired
+      // Allow tab to function normally, closing dropdown
       isDropdownVisible.value = false;
       break;
   }
 }
 
 function showDropdown() {
-  if (filteredItems.value.length > 0) {
+  if (props.items.length > 0) {
     isDropdownVisible.value = true;
   }
 }
@@ -131,14 +112,7 @@ function showDropdown() {
 function hideDropdownDelayed() {
   // Delay hiding to allow click on dropdown items
   setTimeout(() => {
-    // A more robust check for focus within the component
-    const activeElement = document.activeElement;
-    const wrapper = inputRef.value?.closest('.custom-combobox-wrapper');
-    if (wrapper && !wrapper.contains(activeElement)) {
-        isDropdownVisible.value = false;
-    } else if (!wrapper) { // Fallback if wrapper isn't found for some reason
-        isDropdownVisible.value = false;
-    }
+    isDropdownVisible.value = false;
   }, 200);
 }
 
@@ -178,13 +152,13 @@ defineExpose({
       role="combobox"
     />
     <ul
-      v-if="isDropdownVisible && filteredItems.length > 0"
+      v-if="isDropdownVisible && items.length > 0"
       class="combobox-dropdown"
       role="listbox"
       :id="`combobox-listbox-${Date.now()}`" 
     >
       <li
-        v-for="(item, index) in filteredItems"
+        v-for="(item, index) in items"
         :key="item[props.valueField] || index"
         @mousedown.prevent="selectItem(item)"
         :class="{ 'highlighted': index === highlightedIndex }"
@@ -196,46 +170,54 @@ defineExpose({
         {{ item[props.labelField] }}
       </li>
     </ul>
-    <div v-if="isDropdownVisible && filteredItems.length === 0 && inputValue" class="no-results">
+    <div v-if="isDropdownVisible && items.length === 0 && inputValue" class="no-results">
       No results found.
     </div>
   </div>
 </template>
 
 <style scoped>
-.me-combobox-wrapper {
+.me-combobox {
   position: relative;
   width: 100%;
-  border-left: 1px solid var(--gray);
 }
 
 .combobox-input {
   width: 100%;
-  padding: 0.35rem 0.55rem;
+  padding: 0.25rem 0.75rem;
   box-sizing: border-box;
-  border: 1px solid var(--jet);
+  border: 1px solid var(--translucent-white-3);
+  border-radius: 0.5rem;
   height: 2rem;
-  background-color: var(--jet, #302e2bff); /* Using your jet */
-  color: var(--platinum, #e1e0dcff); /* Using your platinum */
-  transition: box-shadow 0.125s ease-in-out;
+  background-color: var(--eerie-black);
+  color: var(--gray);
+  font-size: 0.7rem;
   outline: none;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+/* Position relative is on the container, not directly on the input */
+.me-combobox {
+  position: relative;
+}
+
+.combobox-input:hover {
+  color: var(--platinum);
+  border-color: turquoise;
 }
 
 .combobox-input:focus {
-  animation: glow-pop 0.2s ease-out;
-  box-shadow: inset 0 0 2px 2px var(--flame, #eb5e28ff);
+  outline: none;
+  border-color: var(--flame);
+  color: var(--flame);
+  text-shadow: 0 0 0.5px currentColor;
 }
 
-@keyframes glow-pop {
-  0% {
-    box-shadow: inset 0 0 0 0 var(--flame, #eb5e28ff);
-  }
-  60% {
-    box-shadow: inset 0 0 0.2rem 0.2rem var(--flame, #eb5e28ff);
-  }
-  100% {
-    box-shadow: inset 0 0 1px 1px var(--flame, #eb5e28ff);
-  }
+/* Apply flame color to input with content */
+.combobox-input:not(:placeholder-shown) {
+  color: var(--flame);
+  text-shadow: 0 0 0.5px currentColor;
 }
 
 .combobox-dropdown {
@@ -243,47 +225,72 @@ defineExpose({
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background-color: var(--jet); /* Using your jet */
-  border: 1px solid var(--translucent-white-05);
+  background-color: var(--eerie-black);
+  border: 1px solid var(--translucent-white-3);
+  border-radius: 0.5rem;
   list-style-type: none;
+  padding: 0;
   margin: 0;
   max-height: 250px;
   overflow-y: auto;
   z-index: 1000;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.2); /* Darker shadow for dark theme */
-  border-bottom-left-radius: 0.375rem;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
 }
 
 .combobox-item {
-  padding: 0.65rem 0.75rem;
+  padding: 0.25rem 0.75rem;
   cursor: pointer;
   user-select: none;
-  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
-  color: var(--platinum, #e1e0dcff); /* Using your platinum */
+  transition: all 0.15s ease;
+  color: var(--gray);
+  font-size: 0.7rem;
+  position: relative;
+  border-bottom: 1px solid var(--translucent-white-3);
+}
+
+.combobox-item:last-child {
+  border-bottom: none;
+}
+
+.combobox-item::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 0px solid transparent;
+  pointer-events: none;
+  transition: border-color 0.15s ease, border-width 0.15s ease, box-shadow 0.15s ease;
 }
 
 .combobox-item.highlighted {
-  background-color: var(--flame, #eb5e28ff); /* Using your flame */
-  color: var(--white, #ffffff); /* Ensuring contrast */
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--flame);
+  text-shadow: 0 0 0.5px currentColor;
 }
 
 .combobox-item:hover:not(.highlighted) {
-  background-color: var(--gray, #7e7a72ff); /* Using your gray for hover */
+  color: var(--platinum);
+}
+
+.combobox-item:hover:not(.highlighted)::after {
+  border: 1px solid turquoise;
 }
 
 .no-results {
-  padding: 0.65rem 0.75rem;
-  color: var(--silver, #b0ada7ff); /* Using your silver */
+  padding: 0.25rem 0.75rem;
+  color: var(--gray);
   font-style: italic;
-  background-color: var(--jet, #302e2bff); /* Using your jet */
-  border: 1px solid var(--gray, #7e7a72ff); /* Using your gray */
-  border-top: none;
-  border-radius: 0 0 0.375rem 0.375rem;
+  font-size: 0.7rem;
+  background-color: var(--eerie-black);
+  border: 1px solid var(--translucent-white-3);
+  border-radius: 0.5rem;
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
   right: 0;
   z-index: 1000;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.2); /* Darker shadow */
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
 }
 </style>

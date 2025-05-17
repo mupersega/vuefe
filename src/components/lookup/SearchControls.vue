@@ -2,8 +2,9 @@
 import { searchInvTypeShortsContains, searchInvTypeShortsStartsWith } from '../../services/db';
 import { ref, watch } from 'vue';
 import type { InvTypeShortDto } from '../../api-client';
-import CustomCombobox from '../shared/CustomCombobox.vue'; // Import the new component
-import MeButtonGroup, { type MeButtonGroupOption } from '../shared/MeButtonGroup.vue';
+import CustomCombobox from '../shared/MeCombobox.vue'; 
+import MeSwitch from '../shared/MeSwitch.vue';
+import MeButtonGroup from '../shared/MeButtonGroup.vue';
 
 const invTypes = ref<InvTypeShortDto[]>([]);
 const isLoading = ref(false);
@@ -11,6 +12,14 @@ const error = ref<string | null>(null);
 const searchQuery = ref('');
 const selectedInvType = ref<InvTypeShortDto | null>(null);
 const isStartsWith = ref(true);
+
+const options = ref([
+    { id: 1, name: 'Option 1', selected: false, disabled: false },
+    { id: 2, name: 'Option 2', selected: false, disabled: false },
+    { id: 3, name: 'Option 3', selected: false, disabled: true },
+    { id: 4, name: 'Option 4', selected: false, disabled: false },
+    { id: 5, name: 'Option 5', selected: false, disabled: false },
+]);
 
 const areInvTypeArraysEqual = (arr1: InvTypeShortDto[], arr2: InvTypeShortDto[]): boolean => {
     if (arr1.length !== arr2.length) {
@@ -24,23 +33,21 @@ const areInvTypeArraysEqual = (arr1: InvTypeShortDto[], arr2: InvTypeShortDto[])
     return true;
 };
 
-const options = ref<MeButtonGroupOption[]>([
-    { id: 1, name: 'Starts With', selected: true },
-    { id: 2, name: 'Contains', selected: false },
-]);
-
-const handleOptionSelected = (selectedOption: MeButtonGroupOption) => {
-    options.value = options.value.map(opt => ({
-        ...opt,
-        selected: opt.id === selectedOption.id
-    }));
-    isStartsWith.value = selectedOption.id === 1;
+function handleSwitchChange() {
+    // Refresh the search results by triggering the search query watcher
     if (searchQuery.value.trim() !== '') {
         const currentQuery = searchQuery.value;
         searchQuery.value = ' ';
         searchQuery.value = currentQuery;
     }
-};
+}
+
+function handleComboboxInput(query: string) {
+    // This handler isn't strictly needed since we watch searchQuery,
+    // but it's here to demonstrate how to handle combobox direct inputs
+    // You could add additional logic here if needed
+    console.log('Combobox input:', query);
+}
 
 watch(searchQuery, (newQuery, _oldQuery) => {
     if (selectedInvType.value && newQuery === selectedInvType.value.typeName) {
@@ -86,16 +93,16 @@ function handleComboboxSelect(item: InvTypeShortDto) {
 <template>
     <div class="search-controls-wrapper">
         <!-- <MeButtonGroup :options="options" :multi="false" @optionSelected="handleOptionSelected" /> -->
-        <label class="me-switch">
-            <span :class="{ 'text-active': !isStartsWith }">starts with</span>
-            <div class="switch-outer">
-                <div class="switch-inner" :class="{ 'switch-inner-active': isStartsWith }"></div>
-                <input type="checkbox" v-model="isStartsWith" @change="handleOptionSelected(isStartsWith ? options[0] : options[1])" />
-            </div>
-            <span :class="{ 'text-active': isStartsWith }">contains</span>
-        </label>
+        <MeSwitch 
+            v-model="isStartsWith"
+            leftLabel="starts with"
+            rightLabel="contains"
+            @change="handleSwitchChange" 
+        />
         <CustomCombobox :items="invTypes" v-model="searchQuery" labelField="typeName" valueField="typeId"
-            placeholder="Type to search items..." @select="handleComboboxSelect" class="search-input-container" />
+            placeholder="Type to search items..." @select="handleComboboxSelect" @input="handleComboboxInput"
+            class="search-input-container" />
+        <MeButtonGroup :options="options" :multi="true" />
     </div>
 </template>
 <style scoped>
@@ -105,66 +112,8 @@ function handleComboboxSelect(item: InvTypeShortDto) {
     gap: 0.5rem;
     padding: 1rem;
     background-color: var(--jet);
-      box-shadow: 0 0 3px 1px var(--night);
+    box-shadow: 1px 1px 3px var(--night);
     border-radius: 0.5rem;
     border: 1px solid var(--translucent-white-3);
 }
-
-.me-switch {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: max-content;
-    padding: 0.25rem 1rem;
-    gap: 0.5rem;
-    border-radius: .5rem;
-    background-color: var(--eerie-black);
-    border: 1px solid var(--translucent-white-3);
-    cursor: pointer;
-    user-select: none;
-    color: var(--gray);
-}
-
-.me-switch:hover{
-    box-shadow: 0 0 2px 1px turquoise inset;
-}
-
-.me-switch:active {
-    box-shadow: 0 0 2px 2px turquoise inset;
-}
-
-.me-switch input[type="checkbox"] {
-    display: none;
-}
-
-.me-switch span {
-    font-size: 0.7rem;
-    transition: color 0.15s ease;
-}
-
-.switch-outer {
-    width: calc(var(--sidebar-width-compressed) / 2);
-    height: calc(var(--sidebar-width-compressed) / 4);
-    background-color: var(--eerie-black);
-    border-radius:  1.5rem;
-    border: 1px solid var(--translucent-white-3);
-    padding: 1px;
-}
-
-.switch-inner {
-    width: calc(var(--sidebar-width-compressed) / 4);
-    height: 100%;
-    background-color: var(--flame);
-    border-radius: 1.5rem;
-    transition: transform 0.15s ease;
-}
-
-.switch-inner-active {
-    transform: translateX(calc(var(--sidebar-width-compressed) / 4 - 4px));
-}
-
-.me-switch .text-active {
-    color: var(--flame);
-}
-
 </style>
