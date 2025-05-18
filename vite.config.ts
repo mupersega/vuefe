@@ -12,6 +12,7 @@ export default defineConfig({
       '@scripts': resolve(__dirname, './src/scripts'),
       '@assets': resolve(__dirname, './src/assets'),
       '@services': resolve(__dirname, './src/services'),
+      '@api-client': resolve(__dirname, './src/api-client'),
     }
   }
 })

@@ -3,10 +3,32 @@ import { ref, watch } from 'vue';
 import type { PropType } from 'vue';
 
 interface ComboboxItem {
-  [key: string]: any; // Allow any string as a key, and any type as a value
+  [key: string]: any;
 }
 
-const props = defineProps({
+interface MeComboboxProps {
+  items: ComboboxItem[];
+  modelValue: string;
+  placeholder?: string;
+  labelField: string;
+  valueField: string;
+  showSearchMode?: boolean;
+  isStartsWith?: boolean;
+}
+
+interface MeComboboxEmits {
+  'update:modelValue': (value: string) => void;
+  'select': (item: ComboboxItem) => void;
+  'input': (value: string) => void;
+  'update:isStartsWith': (value: boolean) => void;
+}
+
+export interface MeComboboxHandle {
+  props: MeComboboxProps;
+  emit: MeComboboxEmits;
+}
+
+const props: MeComboboxProps = defineProps({
   items: {
     type: Array as PropType<ComboboxItem[]>,
     required: true,
@@ -22,20 +44,33 @@ const props = defineProps({
   },
   labelField: {
     type: String,
-    default: 'name' // Default field to display in the dropdown
+    default: 'name' // Default field to use for displaying item labels
   },
   valueField: {
     type: String,
     default: 'id' // Default field to use as the key and potentially the emitted value
+  },
+  showSearchMode: {
+    type: Boolean,
+    default: false // Whether to show the search mode toggle
+  },
+  isStartsWith: {
+    type: Boolean,
+    default: true // Whether to match from beginning (true) or anywhere (false)
   }
 });
 
-const emit = defineEmits(['update:modelValue', 'select', 'input']);
+const emit = defineEmits(['update:modelValue', 'select', 'input', 'update:isStartsWith']);
 
 const inputValue = ref(props.modelValue);
 const isDropdownVisible = ref(false);
 const highlightedIndex = ref(-1);
 const inputRef = ref<HTMLInputElement | null>(null);
+
+// Function to toggle search mode (startsWith or contains)
+function toggleSearchMode() {
+  emit('update:isStartsWith', !props.isStartsWith);
+}
 
 watch(() => props.modelValue, (newValue) => {
   if (newValue !== inputValue.value) {
@@ -135,22 +170,32 @@ defineExpose({
 
 <template>
   <div class="me-combobox" @focusout="hideDropdownDelayed">
-    <input
-      ref="inputRef"
-      type="text"
-      :value="inputValue"
-      @input="handleInput"
-      @keydown="handleKeyDown"
-      @focus="showDropdown"
-      @click="showDropdown"
-      :placeholder="placeholder"
-      class="combobox-input"
-      autocomplete="off"
-      aria-haspopup="listbox"
-      :aria-expanded="isDropdownVisible"
-      :aria-activedescendant="highlightedIndex >= 0 ? `combobox-item-${highlightedIndex}` : undefined"
-      role="combobox"
-    />
+    <div class="combobox-container">
+      <input
+        ref="inputRef"
+        type="text"
+        :value="inputValue"
+        @input="handleInput"
+        @keydown="handleKeyDown"
+        @focus="showDropdown"
+        @click="showDropdown"
+        :placeholder="placeholder"
+        class="combobox-input"
+        autocomplete="off"
+        aria-haspopup="listbox"
+        :aria-expanded="isDropdownVisible"
+        :aria-activedescendant="highlightedIndex >= 0 ? `combobox-item-${highlightedIndex}` : undefined"
+        role="combobox"
+      />
+      <div 
+        v-if="showSearchMode" 
+        class="search-mode-toggle" 
+        @click="toggleSearchMode"
+        :title="isStartsWith ? 'Currently matching from start - Click to match anywhere' : 'Currently matching anywhere - Click to match from start'"
+      >
+        {{ isStartsWith ? 'Aa...' : '...Aa...' }}
+      </div>
+    </div>
     <ul
       v-if="isDropdownVisible && items.length > 0"
       class="combobox-dropdown"
@@ -182,6 +227,12 @@ defineExpose({
   width: 100%;
 }
 
+.combobox-container {
+  position: relative;
+  display: flex;
+  width: 100%;
+}
+
 .combobox-input {
   width: 100%;
   padding: 0.25rem 0.75rem;
@@ -193,8 +244,27 @@ defineExpose({
   color: var(--gray);
   font-size: 0.7rem;
   outline: none;
-  position: relative;
   transition: all 0.15s ease;
+}
+
+.search-mode-toggle {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 0.7rem;
+  color: var(--gray);
+  background: var(--eerie-black);
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.3rem;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.search-mode-toggle:hover {
+  color: var(--flame);
+  text-shadow: 0 0 0.5px currentColor;
 }
 
 /* Position relative is on the container, not directly on the input */

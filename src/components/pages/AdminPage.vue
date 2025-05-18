@@ -29,14 +29,14 @@ const filteredActions = computed<AdminAction[]>(() => {
     const selectedTags = tagFilterOptions.value
         .filter(option => option.selected)
         .map(option => option.name);
-        
+
     // If no tags are selected, show all actions
     if (selectedTags.length === 0) {
         return adminActions;
     }
-    
+
     // Otherwise, filter actions that have at least one of the selected tags
-    return adminActions.filter(action => 
+    return adminActions.filter(action =>
         action.tags.some(tag => selectedTags.includes(tag))
     );
 });
@@ -44,16 +44,16 @@ const filteredActions = computed<AdminAction[]>(() => {
 const executeAction = async (actionId: string) => {
     const action = adminActions.find(a => a.id === actionId);
     if (!action) return;
-    
+
     // If action is dangerous, confirm with the user
     if (action.dangerous && !confirm(`Are you sure you want to ${action.label.toLowerCase()}? This action cannot be undone.`)) {
         return;
     }
-    
+
     isLoading.value = true;
     message.value = '';
     isError.value = false;
-    
+
     try {
         await action.action();
         message.value = `${action.label} completed successfully.`;
@@ -71,55 +71,111 @@ const executeAction = async (actionId: string) => {
     <div class="page-wrapper">
         <div class="header">
             <h1>Admin</h1>
+            <p>This panel provides administrative tools for application management, testing, and maintenance.</p>
         </div>
         <div class="content">
-            <p>This panel provides administrative tools for application management.</p>
-            
             <div class="admin-controls-wrapper">
-                <h2>Database Actions</h2>
-                
-                <!-- Tag filters -->
+                <h2>Administration Tools</h2>
+
                 <div class="filter-section">
-                    <span class="filter-label">Filter by tags:</span>                    <MeButtonGroup 
-                        :options="tagFilterOptions" 
-                        :multi="true"
-                        @update:options="(options) => tagFilterOptions = options"
-                    />
+                    <span class="filter-label">Filter by tags:</span>
+                    <MeButtonGroup :options="tagFilterOptions" :multi="true"
+                        @update:options="(options) => tagFilterOptions = options" />
                 </div>
-                
-                <div class="actions-grid">
-                    <div 
-                        v-for="action in filteredActions" 
-                        :key="action.id"
-                        class="action-card"
-                        :class="{ 'danger-card': action.dangerous }"
-                    >
-                        <div class="action-header">
-                            <font-awesome-icon v-if="action.icon" :icon="action.icon" class="action-icon" />
-                            <span class="action-title">{{ action.label }}</span>
-                        </div>
-                        <div class="action-description">
-                            {{ action.description }}
-                        </div>
-                        <div class="action-footer">
-                            <div class="action-tags">
-                                <span v-for="tag in action.tags" :key="tag" class="tag">{{ tag }}</span>
+                <div class="actions-container">
+                    <!-- Database section -->
+                    <div class="action-section" v-if="filteredActions.some(action => action.tags.includes('database'))">
+                        <h3 class="section-title">
+                            <font-awesome-icon icon="database" class="section-icon" />
+                            Database Management
+                        </h3>
+                        <div class="actions-grid">
+                            <div v-for="action in filteredActions.filter(a => a.tags.includes('database'))"
+                                :key="action.id" class="action-card" :class="{ 'danger-card': action.dangerous }">
+                                <div class="action-header">
+                                    <font-awesome-icon v-if="action.icon" :icon="action.icon" class="action-icon" />
+                                    <span class="action-title">{{ action.label }}</span>
+                                </div>
+                                <div class="action-description">
+                                    {{ action.description }}
+                                </div>
+                                <div class="action-footer">
+                                    <div class="action-tags">
+                                        <span v-for="tag in action.tags" :key="tag" class="tag">{{ tag }}</span>
+                                    </div>
+                                    <button @click="executeAction(action.id)"
+                                        :class="{ 'danger-btn': action.dangerous }" :disabled="isLoading">
+                                        Execute
+                                    </button>
+                                </div>
                             </div>
-                            <button 
-                                @click="executeAction(action.id)"
-                                :class="{ 'danger-btn': action.dangerous }"
-                                :disabled="isLoading"
-                            >
-                                Execute
-                            </button>
+                        </div>
+                    </div>
+
+                    <!-- API Testing section -->
+                    <div class="action-section" v-if="filteredActions.some(action => action.tags.includes('api'))">
+                        <h3 class="section-title">
+                            <font-awesome-icon icon="vial" class="section-icon" />
+                            API Service Testing
+                        </h3>
+                        <div class="actions-grid">
+                            <div v-for="action in filteredActions.filter(a => a.tags.includes('api'))" :key="action.id"
+                                class="action-card" :class="{ 'danger-card': action.dangerous }">
+                                <div class="action-header">
+                                    <font-awesome-icon v-if="action.icon" :icon="action.icon" class="action-icon" />
+                                    <span class="action-title">{{ action.label }}</span>
+                                </div>
+                                <div class="action-description">
+                                    {{ action.description }}
+                                </div>
+                                <div class="action-footer">
+                                    <div class="action-tags">
+                                        <span v-for="tag in action.tags" :key="tag" class="tag">{{ tag }}</span>
+                                    </div>
+                                    <button @click="executeAction(action.id)"
+                                        :class="{ 'danger-btn': action.dangerous }" :disabled="isLoading">
+                                        Execute
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Other actions section (for any that don't fit the categories above) -->
+                    <div class="action-section"
+                        v-if="filteredActions.some(action => !action.tags.includes('api') && !action.tags.includes('database'))">
+                        <h3 class="section-title">
+                            <font-awesome-icon icon="tools" class="section-icon" />
+                            Other Tools
+                        </h3>
+                        <div class="actions-grid">
+                            <div v-for="action in filteredActions.filter(a => !a.tags.includes('api') && !a.tags.includes('database'))"
+                                :key="action.id" class="action-card" :class="{ 'danger-card': action.dangerous }">
+                                <div class="action-header">
+                                    <font-awesome-icon v-if="action.icon" :icon="action.icon" class="action-icon" />
+                                    <span class="action-title">{{ action.label }}</span>
+                                </div>
+                                <div class="action-description">
+                                    {{ action.description }}
+                                </div>
+                                <div class="action-footer">
+                                    <div class="action-tags">
+                                        <span v-for="tag in action.tags" :key="tag" class="tag">{{ tag }}</span>
+                                    </div>
+                                    <button @click="executeAction(action.id)"
+                                        :class="{ 'danger-btn': action.dangerous }" :disabled="isLoading">
+                                        Execute
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                
+
                 <div v-if="message" class="message-container" :class="{ 'error': isError }">
                     {{ message }}
                 </div>
-                
+
                 <div v-if="isLoading" class="loading-indicator">
                     <font-awesome-icon icon="spinner" spin />
                     Processing...
@@ -134,17 +190,20 @@ const executeAction = async (actionId: string) => {
     flex-direction: column;
     gap: 1rem;
     padding: 1rem;
+    width: 100%;
+    height: 100%;
 }
 
 .header h1 {
     color: var(--translucent-white-3);
+    color: var(--gray);
     margin-bottom: 0.25rem;
 }
 
-.content p {
+.header p {
     color: var(--gray);
     margin-top: 0;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
 }
 
 .admin-controls-wrapper {
@@ -164,11 +223,40 @@ const executeAction = async (actionId: string) => {
     margin-bottom: 0.5rem;
 }
 
+.actions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    margin: 1rem 0;
+}
+
+.action-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+    color: var(--translucent-white-7);
+    margin: 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--translucent-white-1);
+}
+
+.section-icon {
+    color: var(--flame);
+    font-size: 1rem;
+}
+
 .actions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 0.75rem;
-    margin: 1rem 0;
+    margin: 0.5rem 0;
 }
 
 .filter-section {
@@ -294,7 +382,8 @@ const executeAction = async (actionId: string) => {
 }
 
 .tag:hover {
-    border-color: rgba(64, 224, 208, 0.4); /* turquoise with opacity */
+    border-color: rgba(64, 224, 208, 0.4);
+    /* turquoise with opacity */
     color: var(--silver);
 }
 
@@ -353,7 +442,8 @@ const executeAction = async (actionId: string) => {
 
 .message-container {
     padding: 0.75rem;
-    background-color: rgba(64, 224, 208, 0.05); /* Subtle turquoise background */
+    background-color: rgba(64, 224, 208, 0.05);
+    /* Subtle turquoise background */
     border-left: 4px solid turquoise;
     border-radius: 0.25rem;
     margin-top: 1rem;

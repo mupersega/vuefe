@@ -10,7 +10,13 @@ import {
     faUsers,
     faBook,
     faShieldCat,
-    faTrash
+    faTrash,
+    faNetworkWired,
+    faVial,
+    faSpinner,
+    faDatabase,
+    faTools,
+    faBug,
 } from '@fortawesome/free-solid-svg-icons'
 
 const icons = [
@@ -22,7 +28,13 @@ const icons = [
     faUsers,
     faBook,
     faShieldCat,
-    faTrash
+    faTrash,
+    faNetworkWired,
+    faVial,
+    faSpinner,
+    faDatabase,
+    faTools,
+    faBug,
 ]
 
 library.add(...icons)

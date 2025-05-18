@@ -8,7 +8,8 @@
       "@components/*": ["src/components/*"],
       "@scripts/*": ["src/scripts/*"],
       "@assets/*": ["src/assets/*"],
-      "@services/*": ["src/services/*"]
+      "@services/*": ["src/services/*"],
+      "@api-client/*": ["src/api-client/*"],
     },
     /* Linting */
     "strict": true,

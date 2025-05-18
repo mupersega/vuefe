@@ -15,7 +15,7 @@ const navItems: NavLinkProps[] = [
 ];
 </script>
 <template>
-  <nav :class="{ expanded: navExpanded }">
+  <nav :class="{ expanded: navExpanded }" id="sidebar">
     <div class="actions">
       <div class="nav-top-spacer">
         <div class="faded">

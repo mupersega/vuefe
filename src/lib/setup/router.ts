@@ -2,7 +2,7 @@ import type { App } from 'vue'
 import { createRouter, createWebHistory, type RouteRecordRaw} from 'vue-router'
 
 import Home from '@/components/pages/Home.vue'
-import Lookup from '@components/library/Library.vue'
+import Lookup from '@/components/pages/Library.vue'
 
 const routes: RouteRecordRaw[] = [
     { path: '/', component: Home },
