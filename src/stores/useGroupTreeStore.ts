@@ -1,7 +1,7 @@
 // stores/useGroupTreeStore.ts
 import { defineStore } from 'pinia'
-import { GroupTreeService } from '@/services/GroupTreeService'
-import type { MarketGroupNodeDto } from '@/api-client'
+import { GroupTreeService } from '@services/GroupTreeService'
+import type { MarketGroupNodeDto } from '@api-client/models/market-group-node-dto'
 export const useGroupTreeStore = defineStore('groupTree', {
     state: () => ({
         tree: [] as MarketGroupNodeDto[],

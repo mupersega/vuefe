@@ -7,6 +7,7 @@ api/inv-groups-api.ts
 api/inv-market-groups-api.ts
 api/inv-types-api.ts
 api/tests-api.ts
+api/type-names-api.ts
 base.ts
 common.ts
 configuration.ts
@@ -18,10 +19,11 @@ docs/InvGroupDto.md
 docs/InvGroupsApi.md
 docs/InvMarketGroupsApi.md
 docs/InvTypeDto.md
-docs/InvTypeShortDto.md
 docs/InvTypesApi.md
 docs/MarketGroupNodeDto.md
 docs/TestsApi.md
+docs/TypeNameDto.md
+docs/TypeNamesApi.md
 git_push.sh
 index.ts
 models/blueprint-dto.ts
@@ -29,5 +31,5 @@ models/index.ts
 models/inv-category-dto.ts
 models/inv-group-dto.ts
 models/inv-type-dto.ts
-models/inv-type-short-dto.ts
 models/market-group-node-dto.ts
+models/type-name-dto.ts

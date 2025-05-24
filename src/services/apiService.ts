@@ -4,10 +4,12 @@ import {
     InvCategoriesApi, 
     InvGroupsApi,
     InvTypesApi,
+    TypeNamesApi,
     type BlueprintDto, 
     type InvCategoryDto,
     type InvGroupDto,
-    type InvTypeShortDto, 
+    type InvTypeDto,
+    type TypeNameDto,
 } from "../api-client";
 
 /**
@@ -19,20 +21,22 @@ class ApiService {
     private blueprintsApi: BlueprintsApi;
     private invGroupsApi: InvGroupsApi;
     private invCategoriesApi: InvCategoriesApi;
+    private typeNamesApi: TypeNamesApi;
 
     constructor(config: Configuration) {
         this.invTypesApi = new InvTypesApi(config);
         this.blueprintsApi = new BlueprintsApi(config);
         this.invGroupsApi = new InvGroupsApi(config);
         this.invCategoriesApi = new InvCategoriesApi(config);
+        this.typeNamesApi = new TypeNamesApi(config);
     }
 
     /**
      * Get inventory types matching the optional search string
      */
-    public async getInvTypes(searchString?: string): Promise<InvTypeShortDto[]> {
+    public async getInvTypes(): Promise<InvTypeDto[]> {
         try {
-            const response = await this.invTypesApi.apiInvTypesGet(searchString);
+            const response = await this.invTypesApi.apiInvTypesGet();
             return response.data;
         } catch (error) {
             console.error("Error fetching InvTypes:", error);
@@ -75,6 +79,17 @@ class ApiService {
             return response.data;
         } catch (error) {
             console.error("Error fetching InvCategories:", error);
+            throw error;
+        }
+    }
+
+    // get all typeNames
+    public async getTypeNames(): Promise<TypeNameDto[]> {
+        try {
+            const response = await this.typeNamesApi.apiTypeNamesGet();
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching Type Names:", error);
             throw error;
         }
     }

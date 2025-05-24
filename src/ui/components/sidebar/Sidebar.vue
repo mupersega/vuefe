@@ -6,12 +6,12 @@ const navExpanded = ref(false);
 
 const navItems: NavLinkProps[] = [
   { to: "/", icon: ['fas', 'house'], text: "Home" },
-  { to: "/draft", icon: ['fas', 'compass-drafting'], text: "Draft" },
-  { to: "/work", icon: ['fas', 'industry'], text: "Work" },
+  { to: "/workshop", icon: ['fas', 'compass-drafting'], text: "Workshop" },
+  { to: "/foundry", icon: ['fas', 'industry'], text: "Foundry" },
+  { to: "/Barracks", icon: ['fas', 'users'], text: "Barracks" },
+  { to: "/archive", icon: ['fas', 'book'], text: "Archive" },
   { to: "/sdf", icon: ['fas', 'sliders'], text: "Lookup" },
-  { to: "/awefsd", icon: ['fas', 'users'], text: "Character" },
-  { to: "/explore", icon: ['fas', 'book'], text: "Library" },
-  { to: "/admin", icon: ['fas', 'shield-cat'], text: "Library" },
+  { to: "/bridge", icon: ['fas', 'shield-cat'], text: "Bridge" },
 ];
 </script>
 <template>

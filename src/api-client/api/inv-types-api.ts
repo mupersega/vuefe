@@ -23,8 +23,6 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
 import type { InvTypeDto } from '../models';
-// @ts-ignore
-import type { InvTypeShortDto } from '../models';
 /**
  * InvTypesApi - axios parameter creator
  * @export
@@ -33,11 +31,11 @@ export const InvTypesApiAxiosParamCreator = function (configuration?: Configurat
     return {
         /**
          * 
-         * @param {string} [searchString] 
+         * @param {Array<number>} [ids] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiInvTypesGet: async (searchString?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        apiInvTypesGet: async (ids?: Array<number>, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/InvTypes`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -50,8 +48,8 @@ export const InvTypesApiAxiosParamCreator = function (configuration?: Configurat
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
-            if (searchString !== undefined) {
-                localVarQueryParameter['searchString'] = searchString;
+            if (ids) {
+                localVarQueryParameter['ids'] = ids;
             }
 
 
@@ -110,12 +108,12 @@ export const InvTypesApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
-         * @param {string} [searchString] 
+         * @param {Array<number>} [ids] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async apiInvTypesGet(searchString?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<InvTypeShortDto>>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.apiInvTypesGet(searchString, options);
+        async apiInvTypesGet(ids?: Array<number>, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<InvTypeDto>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiInvTypesGet(ids, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['InvTypesApi.apiInvTypesGet']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -144,12 +142,12 @@ export const InvTypesApiFactory = function (configuration?: Configuration, baseP
     return {
         /**
          * 
-         * @param {string} [searchString] 
+         * @param {Array<number>} [ids] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        apiInvTypesGet(searchString?: string, options?: RawAxiosRequestConfig): AxiosPromise<Array<InvTypeShortDto>> {
-            return localVarFp.apiInvTypesGet(searchString, options).then((request) => request(axios, basePath));
+        apiInvTypesGet(ids?: Array<number>, options?: RawAxiosRequestConfig): AxiosPromise<Array<InvTypeDto>> {
+            return localVarFp.apiInvTypesGet(ids, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -172,13 +170,13 @@ export const InvTypesApiFactory = function (configuration?: Configuration, baseP
 export class InvTypesApi extends BaseAPI {
     /**
      * 
-     * @param {string} [searchString] 
+     * @param {Array<number>} [ids] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InvTypesApi
      */
-    public apiInvTypesGet(searchString?: string, options?: RawAxiosRequestConfig) {
-        return InvTypesApiFp(this.configuration).apiInvTypesGet(searchString, options).then((request) => request(this.axios, this.basePath));
+    public apiInvTypesGet(ids?: Array<number>, options?: RawAxiosRequestConfig) {
+        return InvTypesApiFp(this.configuration).apiInvTypesGet(ids, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

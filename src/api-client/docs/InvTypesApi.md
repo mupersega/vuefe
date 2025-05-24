@@ -8,7 +8,7 @@ All URIs are relative to *http://localhost*
 |[**apiInvTypesIdGet**](#apiinvtypesidget) | **GET** /api/InvTypes/{id} | |
 
 # **apiInvTypesGet**
-> Array<InvTypeShortDto> apiInvTypesGet()
+> Array<InvTypeDto> apiInvTypesGet()
 
 
 ### Example
@@ -22,10 +22,10 @@ import {
 const configuration = new Configuration();
 const apiInstance = new InvTypesApi(configuration);
 
-let searchString: string; // (optional) (default to undefined)
+let ids: Array<number>; // (optional) (default to undefined)
 
 const { status, data } = await apiInstance.apiInvTypesGet(
-    searchString
+    ids
 );
 ```
 
@@ -33,12 +33,12 @@ const { status, data } = await apiInstance.apiInvTypesGet(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
-| **searchString** | [**string**] |  | (optional) defaults to undefined|
+| **ids** | **Array&lt;number&gt;** |  | (optional) defaults to undefined|
 
 
 ### Return type
 
-**Array<InvTypeShortDto>**
+**Array<InvTypeDto>**
 
 ### Authorization
 

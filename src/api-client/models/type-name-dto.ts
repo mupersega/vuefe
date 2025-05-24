@@ -14,11 +14,23 @@
 
 
 
-export * from './api/blueprints-api';
-export * from './api/inv-categories-api';
-export * from './api/inv-groups-api';
-export * from './api/inv-market-groups-api';
-export * from './api/inv-types-api';
-export * from './api/tests-api';
-export * from './api/type-names-api';
+/**
+ * 
+ * @export
+ * @interface TypeNameDto
+ */
+export interface TypeNameDto {
+    /**
+     * 
+     * @type {number}
+     * @memberof TypeNameDto
+     */
+    'typeId'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof TypeNameDto
+     */
+    'typeName'?: string | null;
+}
 

@@ -1,17 +1,17 @@
 // db.ts
 import Dexie, { type EntityTable } from 'dexie';
-import type { InvTypeShortDto, BlueprintDto} from '../api-client';
+import type { BlueprintDto, TypeNameDto} from '../api-client';
 import apiService from './ApiService';
 
 const db = new Dexie('dexDb') as Dexie & {
-  invTypeShorts: EntityTable<InvTypeShortDto>;
+  typeNames: EntityTable<TypeNameDto>;
   blueprints: EntityTable<BlueprintDto>;
   invCategories: EntityTable<any>;
   invGroups: EntityTable<any>;
 };
 
 db.version(1).stores({
-  invTypeShorts: 'typeId, typeName',
+  typeNames: 'typeId, typeName',
   blueprints: 'productId, blueprintId, blueprintName, productName, activityId, categoryId, groupId',
   invCategories: 'categoryId, categoryName',
   invGroups: 'groupId, groupName',
@@ -42,9 +42,9 @@ interface SeedConfig {
  */
 const seedConfigs: SeedConfig[] = [
   {
-    tableName: 'invTypeShorts',
-    apiMethod: 'getInvTypes',
-    displayName: 'InvTypeShorts'
+    tableName: 'typeNames',
+    apiMethod: 'getTypeNames',
+    displayName: 'TypeNames'
   },
   {
     tableName: 'blueprints',
@@ -384,27 +384,10 @@ export const debugQB = async (): Promise<void> => {
     }
 };
 
-// Keep the original functions for backward compatibility
-function searchInvTypeShortsStartsWith(
-  search: string,
-  limit: number
-): Promise<InvTypeShortDto[]> {
-  return searchStartsWith(db.invTypeShorts, 'typeName', search, limit);
-}
-
-function searchInvTypeShortsContains(
-  search: string,
-  limit: number
-): Promise<InvTypeShortDto[]> {
-  return searchContains(db.invTypeShorts, 'typeName', search, limit);
-}
-
 export { 
   db,
   searchStartsWith,
   searchContains,
   createQuery,
   createOptimizedQuery,
-  searchInvTypeShortsStartsWith,
-  searchInvTypeShortsContains,
 };

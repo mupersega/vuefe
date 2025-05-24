@@ -1,4 +1,5 @@
 @import './ui/style/utils.css';
+@import '@ui/style/globals.css';
 
 /*  reset */
 * {

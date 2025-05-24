@@ -7,7 +7,7 @@ const message = ref('');
 const isLoading = ref(false);
 const isError = ref(false);
 
-import type { MeButtonGroupOption } from '../shared/MeButtonGroup.vue';
+import type { MeButtonGroupOption } from '@shared/MeButtonGroup.vue';
 
 // Extract all unique tags from admin actions
 const allTags = Array.from(new Set(
@@ -68,9 +68,9 @@ const executeAction = async (actionId: string) => {
 
 </script>
 <template>
-    <div class="page-wrapper">
+<div class="main-view">
         <div class="header">
-            <h1>Admin</h1>
+            <h1>The Bridge</h1>
             <p>This panel provides administrative tools for application management, testing, and maintenance.</p>
         </div>
         <div class="content">
@@ -185,14 +185,6 @@ const executeAction = async (actionId: string) => {
     </div>
 </template>
 <style scoped>
-.page-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
-    width: 100%;
-    height: 100%;
-}
 
 .header h1 {
     color: var(--translucent-white-3);

@@ -1,55 +1,18 @@
 <template>
-  <div class="app-container">
-    <!-- <Tex /> -->
-    <Sidebar />
-    <main>
-      <div class="top-bar">
-        <SearchControls />
-      </div class="top-bar">
-      <div class="page-content">
-        <RouterView />
-      </div>
-    </main>
-  </div>
+  <MainLayout :showSearchControls="!isAdminRoute">
+    <RouterView />
+  </MainLayout>
 </template>
 
 <script setup lang="ts">
-  import Sidebar from '@components/sidebar/Sidebar.vue';
-  // import Tex from './components/Tex.vue';
-  import SearchControls from '@components/searchControls/SearchControls.vue';
+  import MainLayout from '@ui/layouts/MainLayout.vue';
+  import { computed } from 'vue';
+  import { useRoute } from 'vue-router';
+  
+  const route = useRoute();
+  const isAdminRoute = computed(() => route.path === '/admin');
 </script>
 
 <style scoped>
-  .app-container {
-    display: grid;
-    grid-template-columns: min-content 3fr;
-    grid-template-rows: 1fr;
-    grid-template-areas:
-      "nav main";
-    height: 100vh;
-    width: 100vw;
-  }
-
-  .top-bar {
-    grid-area: top-bar;
-    display: flex;
-    flex-direction: row;
-  }
-
-  main {
-    grid-area: main;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .page-content {
-    display: flex;
-    overflow-y: scroll;
-    height: 100%;
-    align-items: center;
-    justify-content: center;
-  }
-
+  /* All styles moved to MainLayout.vue */
 </style>

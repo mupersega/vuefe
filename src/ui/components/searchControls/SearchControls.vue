@@ -1,5 +1,5 @@
-<script setup lang="ts">
-import { ref, watch } from 'vue';
+<script lang="ts">
+import { defineComponent } from 'vue';
 import { searchStartsWith, searchContains, db } from '@services/db';
 
 import MeCombobox from '@components/shared/MeCombobox.vue';
@@ -8,168 +8,170 @@ import MeSwitch from '@components/shared/MeSwitch.vue';
 import { createComboboxHandler } from './ComboboxHandler';
 import type { BlueprintDto, InvCategoryDto } from '@/api-client';
 
-const disabledRoutes = [
-    '/admin'
-];
-
-let mainSearchString = "";
-const selectedCategories = [1, 2, 3];
-const viewCats = ref<InvCategoryDto[]>([]);
-
-const getAllBlueprints = async () => {
-    if (mainSearchString == "") {
-        console.log('No search string - searching on activity ID', mainSearchString);
-        return await db.blueprints
-            .where('activityId').equals(activityId.value)
-            .filter((bp) => selectedCategories.includes(bp.categoryId))
-            .toArray();
-    } else {
-        console.log('Main search string:', mainSearchString);
-        return await db.blueprints
-            .where('blueprintName').startsWithIgnoreCase(mainSearchString)
-            .and((bp) => bp.activityId === activityId.value)
-            .toArray();
-    }
-};
-// Watch for changes to activityId and refresh search results
-const activityId = ref(1);
-watch(activityId, () => {
-    if (typeCombobox.state.searchQuery) {
-        typeCombobox.setSearchQuery(typeCombobox.state.searchQuery);
-    }
-});
-
-const byBlueprint = ref(false);
-watch(byBlueprint, async (newValue) => {
-    console.log('By Blueprint: ' + newValue);
-    const results = await getAllBlueprints()
-    console.log('Search results:', results);
-});
-
-// Helper function to compare arrays by a specific field
-const areArraysEqualByField = <T>(arr1: T[], arr2: T[], field: keyof T): boolean => {
-    if (arr1.length !== arr2.length) {
-        return false;
-    }
-    for (let i = 0; i < arr1.length; i++) {
-        if (arr1[i][field] !== arr2[i][field]) {
-            return false;
+export default defineComponent({
+    name: 'SearchControls',
+    
+    components: {
+        MeCombobox,
+        MeButtonGroup,
+        MeSwitch
+    },
+      data() {
+        return {
+            mainSearchString: "",
+            selectedCategories: [1, 2, 3],
+            viewCats: [] as InvCategoryDto[],
+            bpMode: true,
+            
+            // Will initialize these in created hook
+            typeCombobox: null as any,
+            groupsCombobox: null as any
+        };
+    },
+    
+    watch: {
+        activityId() {
+            if (this.typeCombobox?.state.searchQuery) {
+                this.typeCombobox.setSearchQuery(this.typeCombobox.state.searchQuery);
+            }
+        },
+        
+        async bpMode(newValue) {
+            console.log('bpMode: ' + newValue);
+        }
+    },
+    
+    created() {
+        // Helper function to compare arrays by a specific field
+        const areArraysEqualByField = <T>(arr1: T[], arr2: T[], field: keyof T): boolean => {
+            if (arr1.length !== arr2.length) {
+                return false;
+            }
+            for (let i = 0; i < arr1.length; i++) {
+                if (arr1[i][field] !== arr2[i][field]) {
+                    return false;
+                }
+            }
+            return true;
+        };
+        
+        // Initialize typeCombobox
+        this.typeCombobox = createComboboxHandler<BlueprintDto>({
+            labelField: 'productName',
+            valueField: 'productId',
+            searchFn: (query, limit = 1000, isStartsWith = true) => {
+                return isStartsWith
+                    ? searchStartsWith(
+                        db.blueprints,
+                        'productName',
+                        query,
+                        limit,
+                    )
+                    : searchContains(
+                        db.blueprints,
+                        'productName',
+                        query,
+                        limit,
+                    );
+            },
+            onSelect: (item) => {
+                console.log('Selected item type:', item);
+                this.mainSearchString = item.productName || '';
+            },
+            onChange: (value) => {
+                console.log('Input changed:', value);
+                this.mainSearchString = value;
+            },
+            areItemsEqual: (arr1, arr2) => areArraysEqualByField(arr1, arr2, 'blueprintId'),
+            defaultSearchMode: 'startsWith'
+        });
+        
+        // Initialize groupsCombobox
+        this.groupsCombobox = createComboboxHandler<InvCategoryDto>({
+            labelField: 'categoryName',
+            valueField: 'categoryId',
+            searchFn: async (query, limit = 1000, isStartsWith = true) =>
+                isStartsWith
+                    ? searchStartsWith(db.invCategories, 'categoryName', query, limit)
+                    : searchContains(db.invCategories, 'categoryName', query, limit),
+            onSelect: async (item) => {
+                console.log('Selected category:', item);
+                await this.addCategory(item.categoryId);
+                this.viewCats = await this.getCategories();
+            },
+            areItemsEqual: (arr1, arr2) => areArraysEqualByField(arr1, arr2, 'categoryId'),
+            defaultSearchMode: 'contains'
+        });
+    },
+    
+    methods: {
+        async addCategory(categoryId: number) {
+            if (!this.selectedCategories.includes(categoryId)) {
+                this.selectedCategories.push(categoryId);
+                console.log('Added category:', categoryId);
+            }
+        },
+        
+        async removeCategory(categoryId: number) {
+            const index = this.selectedCategories.indexOf(categoryId);
+            if (index !== -1) {
+                this.selectedCategories.splice(index, 1);
+                console.log('Removed category:', categoryId);
+            }
+        },
+        
+        async getCategories() {
+            return await db.invCategories
+                .where('categoryId')
+                .anyOf(this.selectedCategories)
+                .toArray();
         }
     }
-    return true;
-};
-
-const typeCombobox = createComboboxHandler<BlueprintDto>({
-    labelField: 'productName',
-    valueField: 'productId',
-    searchFn: (query, limit = 1000, isStartsWith = true) => {
-
-        return isStartsWith
-            ? searchStartsWith(
-                db.blueprints,
-                'productName',
-                query,
-                limit,
-            )
-            : searchContains(
-                db.blueprints,
-                'productName',
-                query,
-                limit,
-            );
-    },
-    onSelect: (item) => {
-        console.log('Selected item type:', item);
-        mainSearchString = item.productName || '';
-    },
-    onChange: (value) => {
-        console.log('Input changed:', value);
-        mainSearchString = value;
-    },
-    areItemsEqual: (arr1, arr2) => areArraysEqualByField(arr1, arr2, 'blueprintId'),
-    defaultSearchMode: 'startsWith'
 });
-
-// Create our combobox handler for groups search
-// Note: You'll need to implement the actual search function
-const groupsCombobox = createComboboxHandler<InvCategoryDto>({
-    labelField: 'categoryName',
-    valueField: 'categoryId',
-    searchFn: async (query, limit = 1000, isStartsWith = true) =>
-        isStartsWith
-            ? searchStartsWith(db.invCategories, 'categoryName', query, limit)
-            : searchContains(db.invCategories, 'categoryName', query, limit),
-    onSelect: async (item) => {
-        console.log('Selected category:', item);
-        addCategory(item.categoryId);
-        viewCats.value = await getCategories();
-    },
-    areItemsEqual: (arr1, arr2) => areArraysEqualByField(arr1, arr2, 'categoryId'),
-    defaultSearchMode: 'contains'
-});
-
-const addCategory = async (categoryId: number) => {
-    if (!selectedCategories.includes(categoryId)) {
-        selectedCategories.push(categoryId);
-        console.log('Added category:', categoryId);
-    }
-};
-
-const removeCategory = async (categoryId: number) => {
-    const index = selectedCategories.indexOf(categoryId);
-    if (index !== -1) {
-        selectedCategories.splice(index, 1);
-        console.log('Removed category:', categoryId);
-    }
-};
-
-const getCategories = async () => {
-    return await db.invCategories
-        .where('categoryId')
-        .anyOf(selectedCategories)
-        .toArray();
-};
-
 </script>
 
 
 <template>
-    <div v-if="!disabledRoutes.includes($route.path)"
-        :class="['search-controls-wrapper', { 'search-controls-disabled': disabledRoutes.includes($route.path) }]">
+    <div class="search-controls-wrapper">
         <div class="filter-options">
-            <MeSwitch v-model="byBlueprint" :label="'By Blueprint'" :labelPosition="'right'" />
+            <MeSwitch v-model="bpMode" :label="'bpMode'" :labelPosition="'right'" left-label="bp" right-label="item" />
             <!-- Activity selector -->
-            <div class="activity-selector">
-                <label>Activity ID:</label>
-                <select v-model="activityId">
-                    <option :value="1">Manufacturing (1)</option>
-                    <option :value="3">Time Efficiency Research (3)</option>
-                    <option :value="4">Material Efficiency Research (4)</option>
-                    <option :value="5">Copying (5)</option>
-                    <option :value="8">Invention (8)</option>
-                    <option :value="11">Reaction (11)</option>
-                </select>
-            </div>
         </div>
 
-        <MeCombobox :items="typeCombobox.state.items" v-model="typeCombobox.state.searchQuery"
-            :labelField="typeCombobox.fields.label" :valueField="typeCombobox.fields.value"
-            placeholder="Type to search blueprints..." @select="typeCombobox.handleSelect"
-            @input="typeCombobox.handleInput" :showSearchMode="true" :isStartsWith="typeCombobox.isStartsWith.value"
-            @update:isStartsWith="(value) => typeCombobox.isStartsWith.value = value" class="search-input-container" />
-        <div class="filter">
+        <MeCombobox 
+            v-if="typeCombobox"
+            :items="typeCombobox.state.items" 
+            v-model="typeCombobox.state.searchQuery"
+            :labelField="typeCombobox.fields.label" 
+            :valueField="typeCombobox.fields.value"
+            placeholder="Type to search Items..." 
+            @select="typeCombobox.handleSelect"
+            @input="typeCombobox.handleInput" 
+            :showSearchMode="true" 
+            :isStartsWith="typeCombobox.isStartsWith.value"
+            @update:isStartsWith="(value) => typeCombobox.isStartsWith.value = value" 
+            class="search-input-container" 
+        />
+        <!-- <div class="filter">
             add filter
-            <MeCombobox :items="groupsCombobox.state.items" v-model="groupsCombobox.state.searchQuery"
-                :labelField="groupsCombobox.fields.label" :valueField="groupsCombobox.fields.value"
-                placeholder="Type to search groups..." @select="groupsCombobox.handleSelect"
-                @input="groupsCombobox.handleInput" :showSearchMode="true"
+            <MeCombobox 
+                v-if="groupsCombobox"
+                :items="groupsCombobox.state.items" 
+                v-model="groupsCombobox.state.searchQuery"
+                :labelField="groupsCombobox.fields.label" 
+                :valueField="groupsCombobox.fields.value"
+                placeholder="Type to search groups..." 
+                @select="groupsCombobox.handleSelect"
+                @input="groupsCombobox.handleInput" 
+                :showSearchMode="true"
                 :isStartsWith="groupsCombobox.isStartsWith.value"
                 @update:isStartsWith="(value) => groupsCombobox.isStartsWith.value = value"
-                class="search-input-container" />
-            <div class="cat" v-for="cat in viewCats">
+                class="search-input-container" 
+            />
+            <div class="cat" v-for="cat in viewCats" :key="cat.categoryId">
                 {{ cat.categoryName }}
             </div>
-        </div>
+        </div> -->
     </div>
 </template>
 
@@ -184,6 +186,12 @@ const getCategories = async () => {
     border-radius: 0.5rem;
     border: 1px solid var(--translucent-white-3);
     margin: 1rem;
+    transform: translateY(0px);
+    transition: transform 0.3s ease-in-out;
+
+    @starting-style {
+        transform: translateY(-100%);
+    }
 }
 
 .filter-options {
