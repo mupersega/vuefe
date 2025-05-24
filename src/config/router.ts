@@ -1,13 +1,13 @@
 import type { App } from 'vue'
 import { createRouter, createWebHistory, type RouteRecordRaw} from 'vue-router'
 
-import Home from '@/components/pages/Home.vue'
-import Lookup from '@/components/pages/Library.vue'
+import HomeView from '@views/HomeView.vue'
+import LibraryView from '@views/LibraryView.vue'
 
 const routes: RouteRecordRaw[] = [
-    { path: '/', component: Home },
-    { path: '/lookup', component: Lookup },
-    { path: '/admin', component: () => import('@/components/pages/AdminPage.vue') },
+    { path: '/', component: HomeView },
+    { path: '/lookup', component: LibraryView },
+    { path: '/admin', component: () => import('@views/AdminView.vue') },
 ]
 
 const router = createRouter({

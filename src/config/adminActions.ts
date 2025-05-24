@@ -1,5 +1,5 @@
 import { db, debugQB } from '@/services/db';
-import apiService from '@/services/apiService';
+import apiService from '@/services/ApiService';
 
 /**
  * Administrative actions for the EVE application

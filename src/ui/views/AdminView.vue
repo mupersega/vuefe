@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { adminActions, type AdminAction } from '@/lib/adminActions';
-import MeButtonGroup from '../shared/MeButtonGroup.vue';
+import { adminActions, type AdminAction } from '@config/adminActions';
+import MeButtonGroup from '@shared/MeButtonGroup.vue';
 
 const message = ref('');
 const isLoading = ref(false);

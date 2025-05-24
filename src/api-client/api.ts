@@ -17,5 +17,7 @@
 export * from './api/blueprints-api';
 export * from './api/inv-categories-api';
 export * from './api/inv-groups-api';
+export * from './api/inv-market-groups-api';
 export * from './api/inv-types-api';
+export * from './api/tests-api';
 

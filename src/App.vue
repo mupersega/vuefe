@@ -14,9 +14,9 @@
 </template>
 
 <script setup lang="ts">
-  import Sidebar from './components/pages/sidebar/Sidebar.vue';
+  import Sidebar from '@components/sidebar/Sidebar.vue';
   // import Tex from './components/Tex.vue';
-  import SearchControls from './components/pages/searchControls/SearchControls.vue';
+  import SearchControls from '@components/searchControls/SearchControls.vue';
 </script>
 
 <style scoped>

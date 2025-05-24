@@ -1,7 +1,7 @@
 // db.ts
 import Dexie, { type EntityTable } from 'dexie';
 import type { InvTypeShortDto, BlueprintDto} from '../api-client';
-import apiService from './apiService';
+import apiService from './ApiService';
 
 const db = new Dexie('dexDb') as Dexie & {
   invTypeShorts: EntityTable<InvTypeShortDto>;

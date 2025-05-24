@@ -1,17 +1,20 @@
 import { createApp } from 'vue'
-import { registerIcons } from './lib/setup/icons'
-import { registerStore } from './lib/setup/pinia'
-import { registerRouter } from './lib/setup/router'
+import { registerStore } from './stores/registerStore'
+import { registerIcons } from './config/icons'
+import { registerRouter } from './config/router'
 
 import './style.css'
-import './services/apiService'
+import './services/ApiService'
 
 import App from './App.vue'
+import { loadStores } from './stores'
 
 const app = createApp(App)
 
 registerIcons(app)
 registerStore(app)
 registerRouter(app)
+
+loadStores()
 
 app.mount('#app')

@@ -4,7 +4,7 @@ import { searchStartsWith, searchContains, db } from '@services/db';
 
 import MeCombobox from '@components/shared/MeCombobox.vue';
 import MeButtonGroup from '@components/shared/MeButtonGroup.vue';
-import MeSwitch from '@/components/shared/MeSwitch.vue';
+import MeSwitch from '@components/shared/MeSwitch.vue';
 import { createComboboxHandler } from './ComboboxHandler';
 import type { BlueprintDto, InvCategoryDto } from '@/api-client';
 
