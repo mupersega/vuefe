@@ -1,43 +1,31 @@
 <template>
   <div class="market-group">
-    <p>{{ baseNode.marketGroupName }}</p>
-    <div class="filter-options">
-      <!-- Display child nodes (recursively) -->
-      <div v-if="hasChildren" class="children">
-        <div 
-          v-for="child in baseNode.children"
-          :key="child.marketGroupId" 
-          class="child-item"
-        >
-          <!-- For direct children that have their own children, use recursion -->
-          <div v-if="child.children && child.children.length > 0">
-            <MarketGroupFilter 
-              :baseNode="child"
-              @select="forwardSelection"
-            />
-          </div>
-          <!-- For direct children that are leaf nodes, show select button -->
-          <div v-else>
-            <p>{{ child.marketGroupName }}</p>
-            <button @click="selectChild(child)">Select</button>
-          </div>
-        </div>
-      </div>
-      <!-- Display types if this is a leaf node with types -->
-      <div v-if="baseNode.hasTypes" class="types">
-        <button @click="selectGroup">Select All Types</button>
-      </div>
+    <div class="node-header">
+      <span v-if="hasChildren" class="toggle" @click="toggleExpanded">
+        {{ expanded ? '▼' : '▶' }}
+      </span>
+      <span>{{ baseNode.marketGroupName }}</span>
+      <button @click="includeThis">Include This</button>
+      <button v-if="hasChildren || baseNode.hasTypes" @click="includeAll">Include All</button>
+    </div>
+    <div v-if="expanded && hasChildren" class="children">
+      <MarketGroupFilter
+        v-for="child in baseNode.children"
+        :key="child.marketGroupId"
+        :baseNode="child"
+        @include-this="forwardIncludeThis"
+        @include-all="forwardIncludeAll"
+      />
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, ref, type PropType } from 'vue';
 import type { MarketGroupNodeDto } from '@/api-client';
 
 export default defineComponent({
   name: 'MarketGroupFilter',
-  // Add self-reference for recursion
   components: {
     MarketGroupFilter: () => import('./MarketGroupFilter.vue')
   },
@@ -47,24 +35,35 @@ export default defineComponent({
       required: true
     }
   },
-  computed: {
-    hasChildren() {
-      return this.baseNode.children && this.baseNode.children.length > 0;
+  setup(props, { emit }) {
+    const expanded = ref(false);
+    const hasChildren = props.baseNode.children && props.baseNode.children.length > 0;
+
+    function toggleExpanded() {
+      expanded.value = !expanded.value;
     }
-  },
-  methods: {
-    selectGroup() {
-      // Emit event when this group is selected
-      this.$emit('select', this.baseNode);
-    },
-    selectChild(node: MarketGroupNodeDto) {
-      // Emit event when a child is selected
-      this.$emit('select', node);
-    },
-    forwardSelection(node: MarketGroupNodeDto) {
-      // Forward selection events from child components up the tree
-      this.$emit('select', node);
+    function includeThis() {
+      emit('include-this', props.baseNode);
     }
+    function includeAll() {
+      emit('include-all', props.baseNode);
+    }
+    function forwardIncludeThis(node: MarketGroupNodeDto) {
+      emit('include-this', node);
+    }
+    function forwardIncludeAll(node: MarketGroupNodeDto) {
+      emit('include-all', node);
+    }
+
+    return {
+      expanded,
+      hasChildren,
+      toggleExpanded,
+      includeThis,
+      includeAll,
+      forwardIncludeThis,
+      forwardIncludeAll
+    };
   }
 });
 </script>
@@ -75,32 +74,30 @@ export default defineComponent({
   border-left: 1px solid var(--translucent-white-3);
   padding-left: 10px;
 }
-
+.node-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.toggle {
+  cursor: pointer;
+  font-size: 0.9rem;
+  user-select: none;
+}
 .children {
-  margin-top: 5px;
-}
-
-.child-item {
   margin-left: 10px;
-  padding: 5px;
-  border-left: 1px solid var(--translucent-white-3);
+  margin-top: 3px;
 }
-
-.types {
-  margin-top: 5px;
-}
-
 button {
   background-color: var(--eerie-black);
   color: var(--gray);
   border: 1px solid var(--translucent-white-3);
   border-radius: 0.3rem;
-  padding: 0.25rem 0.5rem;
+  padding: 0.15rem 0.4rem;
   font-size: 0.7rem;
   cursor: pointer;
   transition: all 0.15s ease;
 }
-
 button:hover {
   color: var(--flame);
   border-color: var(--flame);
