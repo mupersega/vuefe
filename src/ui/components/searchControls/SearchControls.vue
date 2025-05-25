@@ -3,170 +3,147 @@ import { defineComponent } from 'vue';
 import { searchStartsWith, searchContains, db } from '@services/db';
 
 import MeCombobox from '@components/shared/MeCombobox.vue';
+import { createComboboxHandler } from './ComboboxHandler';
+import MarketGroupFilter from '@components/searchControls/MarketGroupFilter.vue'; // Use relative path for clarity
+
 import MeButtonGroup from '@components/shared/MeButtonGroup.vue';
 import MeSwitch from '@components/shared/MeSwitch.vue';
-import { createComboboxHandler } from './ComboboxHandler';
+
 import type { BlueprintDto, InvCategoryDto, MarketGroupNodeDto } from '@/api-client';
-import { useGroupTreeStore } from '@/stores';
+import { useGroupTreeStore } from '@/stores/useGroupTreeStore';
+import { useStagingStore } from '@/stores/useStagingStore';
 
 export default defineComponent({
     name: 'SearchControls',
-    
+
     components: {
         MeCombobox,
         MeButtonGroup,
-        MeSwitch
+        MeSwitch,
+        MarketGroupFilter // Add the component to the registration
     },
-      data() {
+    data() {
         return {
             mainSearchString: "",
             viewCats: [] as InvCategoryDto[],
             bpMode: true,
-            
-            // Will initialize these in created hook
-            typeCombobox: null as any,
-            // groupsCombobox: null as any
-            groupTreeStore: useGroupTreeStore(),
-            allowedMarketGroups: [2],
-            marketGroupOptions : [] as MarketGroupNodeDto[],
+            baseNode: null as MarketGroupNodeDto | null,
         };
     },
-    
     watch: {
-        activityId() {
-            if (this.typeCombobox?.state.searchQuery) {
-                this.typeCombobox.setSearchQuery(this.typeCombobox.state.searchQuery);
-            }
-        },
-        
         async bpMode(newValue) {
             console.log('bpMode: ' + newValue);
-        }
+        },
     },
-    
-    created() {
-        // Helper function to compare arrays by a specific field
-        const areArraysEqualByField = <T>(arr1: T[], arr2: T[], field: keyof T): boolean => {
-            if (arr1.length !== arr2.length) {
-                return false;
-            }
-            for (let i = 0; i < arr1.length; i++) {
-                if (arr1[i][field] !== arr2[i][field]) {
+
+    computed: {
+        stagingStore() {
+            return useStagingStore();
+        },
+        groupTreeStore() {
+            return useGroupTreeStore();
+        },
+        marketGroupOptions() {
+            return this.groupTreeStore.tree;
+        },
+        typeCombobox() {
+            // Helper function to compare arrays by a specific field
+            const areArraysEqualByField = <T>(arr1: T[], arr2: T[], field: keyof T): boolean => {
+                if (arr1.length !== arr2.length) {
                     return false;
                 }
-            }
-            return true;
-        };
-        
-        // Initialize typeCombobox
-        this.typeCombobox = createComboboxHandler<BlueprintDto>({
-            labelField: 'productName',
-            valueField: 'productId',
-            searchFn: (query, limit = 1000, isStartsWith = true) => {
-                return isStartsWith
-                    ? searchStartsWith(
-                        db.blueprints,
-                        'productName',
-                        query,
-                        limit,
-                    )
-                    : searchContains(
-                        db.blueprints,
-                        'productName',
-                        query,
-                        limit,
-                    );
-            },
-            onSelect: (item) => {
-                console.log('Selected item type:', item);
-                this.mainSearchString = item.productName || '';
-            },
-            onChange: (value) => {
-                console.log('Input changed:', value);
-                this.mainSearchString = value;
-            },
-            areItemsEqual: (arr1, arr2) => areArraysEqualByField(arr1, arr2, 'blueprintId'),
-            defaultSearchMode: 'startsWith'
-        });
+                for (let i = 0; i < arr1.length; i++) {
+                    if (arr1[i][field] !== arr2[i][field]) {
+                        return false;
+                    }
+                }
+                return true;
+            };
 
-        console.log(this.groupTreeStore)
-        this.marketGroupOptions = this.groupTreeStore.getGroupById(2);
-        console.log('Market Group Options:', this.marketGroupOptions);
+            return createComboboxHandler<BlueprintDto>({
+                labelField: 'productName',
+                valueField: 'productId',
+                searchFn: (query, limit = 1000, isStartsWith = true) => {
+                    return isStartsWith
+                        ? searchStartsWith(
+                            db.blueprints,
+                            'productName',
+                            query,
+                            limit,
+                        )
+                        : searchContains(
+                            db.blueprints,
+                            'productName',
+                            query,
+                            limit,
+                        );
+                },
+                onSelect: (item) => {
+                    console.log('Selected item type:', item);
+                    this.mainSearchString = item.productName || '';
+                },
+                onChange: (value) => {
+                    console.log('Input changed:', value);
+                    this.mainSearchString = value;
+                },
+                areItemsEqual: (arr1, arr2) => areArraysEqualByField(arr1, arr2, 'blueprintId'),
+                defaultSearchMode: 'startsWith'
+            });
+        }
     },
-    
     methods: {
-        // async addCategory(categoryId: number) {
-        //     if (!this.selectedCategories.includes(categoryId)) {
-        //         this.selectedCategories.push(categoryId);
-        //         console.log('Added category:', categoryId);
-        //     }
-        // },
-        
-        // async removeCategory(categoryId: number) {
-        //     const index = this.selectedCategories.indexOf(categoryId);
-        //     if (index !== -1) {
-        //         this.selectedCategories.splice(index, 1);
-        //         console.log('Removed category:', categoryId);
-        //     }
-        // },
-        
-        // async getCategories() {
-        //     return await db.invCategories
-        //         .where('categoryId')
-        //         .anyOf(this.selectedCategories)
-        //         .toArray();
-        // }
+        /**
+         * Handle selection from the market group dropdown
+         * @param event - The change event from the select element
+         */
+        handleFilterSelect(event: Event) {
+            const target = event.target as HTMLSelectElement;
+            const selectedValue = parseInt(target.value, 10);
+            const marketGroup = this.marketGroupOptions.find(group => group.marketGroupId === selectedValue);
+            if (marketGroup) {
+                this.baseNode = marketGroup;
+            } else {
+                console.warn('No market group found for selected value:', selectedValue);
+            }
+        },
     }
 });
 </script>
 
-
 <template>
     <div class="search-controls-wrapper">
         <div class="filter-options">
-            <MeSwitch v-model="bpMode" :label="'bpMode'" :labelPosition="'right'" left-label="bp" right-label="item" />
-            <!-- Activity selector -->
+            <MeSwitch
+                v-model="bpMode"
+                left-label="bp"
+                right-label="item"/>
         </div>
 
-        <MeCombobox 
+        <MeCombobox
+            class="search-input-container" 
             v-if="typeCombobox"
-            :items="typeCombobox.state.items" 
             v-model="typeCombobox.state.searchQuery"
+            :items="typeCombobox.state.items" 
             :labelField="typeCombobox.fields.label" 
             :valueField="typeCombobox.fields.value"
             placeholder="Type to search Items..." 
-            @select="typeCombobox.handleSelect"
-            @input="typeCombobox.handleInput" 
+            @select="typeCombobox.handleSelect" 
+            @input="typeCombobox.handleInput"
             :showSearchMode="true" 
             :isStartsWith="typeCombobox.isStartsWith.value"
-            @update:isStartsWith="(value) => typeCombobox.isStartsWith.value = value" 
-            class="search-input-container" 
-        />
-        <select name="filterOptions" id="">
+            @update:isStartsWith="(value) => typeCombobox.isStartsWith.value = value"/>
+        <select
+            name="filterOptions" id=""
+            v-on:change="handleFilterSelect">
             <option v-for="group in marketGroupOptions" :value="group.marketGroupId" :key="group.marketGroupId">
                 {{ group.marketGroupName }}
             </option>
         </select>
-        <!-- <div class="filter">
-            add filter
-            <MeCombobox 
-                v-if="groupsCombobox"
-                :items="groupsCombobox.state.items" 
-                v-model="groupsCombobox.state.searchQuery"
-                :labelField="groupsCombobox.fields.label" 
-                :valueField="groupsCombobox.fields.value"
-                placeholder="Type to search groups..." 
-                @select="groupsCombobox.handleSelect"
-                @input="groupsCombobox.handleInput" 
-                :showSearchMode="true"
-                :isStartsWith="groupsCombobox.isStartsWith.value"
-                @update:isStartsWith="(value) => groupsCombobox.isStartsWith.value = value"
-                class="search-input-container" 
-            />
-            <div class="cat" v-for="cat in viewCats" :key="cat.categoryId">
-                {{ cat.categoryName }}
-            </div>
-        </div> -->
+        <!-- Only render MarketGroupFilter when baseNode is not null -->
+        <MarketGroupFilter
+            v-if="baseNode"
+            :baseNode="baseNode"
+        />
     </div>
 </template>
 

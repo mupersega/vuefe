@@ -1,21 +1,32 @@
-<script setup lang="ts">
-const props = defineProps<{
-  modelValue: boolean;
-  leftLabel?: string;
-  rightLabel?: string;
-  switchClass?: string;
-}>()
-
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void;
-  (e: 'change', value: boolean): void;
-}>()
-
-const toggleSwitch = () => {
-  const newValue = !props.modelValue;
-  emit('update:modelValue', newValue);
-  emit('change', newValue);
-};
+<script lang="ts">
+export default {
+  name: 'MeSwitch',
+  props: {
+    modelValue: {
+      type: Boolean,
+      required: true
+    },
+    leftLabel: {
+      type: String,
+      default: undefined
+    },
+    rightLabel: {
+      type: String,
+      default: undefined
+    },
+    switchClass: {
+      type: String,
+      default: undefined
+    }
+  },
+  methods: {
+    toggleSwitch() {
+      const newValue = !this.modelValue;
+      this.$emit('update:modelValue', newValue);
+      this.$emit('change', newValue);
+    }
+  }
+}
 </script>
 
 <template>

@@ -4,6 +4,12 @@
         <main>
             <div class="top-bar" v-if="showSearchControls">
                 <SearchControls />
+                <div class="staging">
+                    <div class="item"
+                    v-for="item in stagingItems">
+                    item: {{ item.typeName }} - {{ item.typeId }}
+                </div>
+                </div>
             </div>
             <div class="page-content">
                 <slot></slot>
@@ -16,6 +22,7 @@
 import { defineComponent } from 'vue';
 import Sidebar from '@components/sidebar/Sidebar.vue';
 import SearchControls from '@components/searchControls/SearchControls.vue';
+import { useStagingStore } from '@/stores/useStagingStore';
 
 export default defineComponent({
     name: 'MainLayout',
@@ -28,7 +35,15 @@ export default defineComponent({
             type: Boolean,
             default: true
         }
-    }
+    },
+    computed: {
+        stagingStore() {
+            return useStagingStore();
+        },
+        stagingItems() {
+            return this.stagingStore.stagedItems;
+        },
+    },
 });
 </script>
 

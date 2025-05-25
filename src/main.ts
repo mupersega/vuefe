@@ -1,5 +1,5 @@
 import { createApp } from 'vue'
-import { registerStore } from './stores/registerStore'
+import { registerPinia } from './stores/registerPinia'
 import { registerIcons } from './config/icons'
 import { registerRouter } from './config/router'
 
@@ -12,7 +12,7 @@ import { loadStores } from './stores'
 const app = createApp(App)
 
 registerIcons(app)
-registerStore(app)
+registerPinia(app)
 registerRouter(app)
 
 loadStores()

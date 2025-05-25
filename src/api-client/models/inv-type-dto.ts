@@ -50,5 +50,11 @@ export interface InvTypeDto {
      * @memberof InvTypeDto
      */
     'graphicId'?: number | null;
+    /**
+     * 
+     * @type {number}
+     * @memberof InvTypeDto
+     */
+    'marketGroupId'?: number | null;
 }
 

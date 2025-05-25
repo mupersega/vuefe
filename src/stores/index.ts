@@ -1,3 +1,3 @@
 export { useGroupTreeStore } from './useGroupTreeStore'
-export { registerStore } from './registerStore'
+export { registerPinia } from './registerPinia'
 export { loadStores } from './loadStores'

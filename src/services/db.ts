@@ -1,13 +1,14 @@
 // db.ts
 import Dexie, { type EntityTable } from 'dexie';
-import type { BlueprintDto, TypeNameDto} from '../api-client';
+import type { BlueprintDto, InvCategoryDto, InvGroupDto, InvTypeDto, TypeNameDto} from '../api-client';
 import apiService from './ApiService';
 
 const db = new Dexie('dexDb') as Dexie & {
   typeNames: EntityTable<TypeNameDto>;
   blueprints: EntityTable<BlueprintDto>;
-  invCategories: EntityTable<any>;
-  invGroups: EntityTable<any>;
+  invCategories: EntityTable<InvCategoryDto>;
+  invGroups: EntityTable<InvGroupDto>;
+  invTypes: EntityTable<InvTypeDto>;
 };
 
 db.version(1).stores({
@@ -15,6 +16,7 @@ db.version(1).stores({
   blueprints: 'productId, blueprintId, blueprintName, productName, activityId, categoryId, groupId',
   invCategories: 'categoryId, categoryName',
   invGroups: 'groupId, groupName',
+  invTypes: 'typeId, marketGroupId',
 },);
 
 db.open().then(() => {
@@ -60,7 +62,12 @@ const seedConfigs: SeedConfig[] = [
     tableName: 'invGroups',
     apiMethod: 'getInvGroups',
     displayName: 'InvGroups'
-  }
+  },
+  {
+    tableName: 'invTypes',
+    apiMethod: 'getInvTypes',
+    displayName: 'InvTypes'
+  },
 ];
 
 /**
@@ -165,11 +172,10 @@ function searchContains<T>(
 /**
  * A filter definition for database queries
  */
-interface Filter {
-  field: string;
+export interface Filter<T> {
+  field: Extract<keyof T, string>;
   operator: 'equals' | 'startsWith' | 'contains' | 'greaterThan' | 'lessThan' | 'between';
   value: any;
-  ignoreCase?: boolean;
 }
 
 /**
@@ -181,7 +187,7 @@ interface Filter {
  */
 function createQuery<T>(
   table: EntityTable<T>,
-  filters: Filter[],
+  filters: Filter<T>[],
   limit: number = 100
 ): Promise<T[]> {
   // Start with the table 
@@ -189,31 +195,25 @@ function createQuery<T>(
   
   // Apply each filter in sequence
   for (const filter of filters) {
-    const { field, operator, value, ignoreCase = true } = filter;
+    const { field, operator, value} = filter;
     
     // Apply the appropriate filter based on the operator
     switch (operator) {
       case 'equals':
-        collection = ignoreCase
-          ? collection.filter(item => (item as any)[field]?.toLowerCase() === value?.toLowerCase())
-          : collection.filter(item => (item as any)[field] === value);
+        collection = collection.filter(item => (item as any)[field]?.toLowerCase() === value?.toLowerCase());
         break;
       
       case 'startsWith':
         // Use built-in startsWith if we're filtering on an indexed field
         try {
-          collection = ignoreCase 
-            ? collection.filter(item => (item as any)[field]?.toLowerCase().startsWith(value?.toLowerCase()))
-            : collection.filter(item => (item as any)[field]?.startsWith(value));
+          collection = collection.filter(item => (item as any)[field]?.toLowerCase().startsWith(value?.toLowerCase()));
         } catch (error) {
           // Fallback to JavaScript filtering if the field is not indexed
           collection = collection.filter(item => {
             const fieldValue = (item as any)[field];
             if (fieldValue == null) return false;
             
-            return ignoreCase 
-              ? String(fieldValue).toLowerCase().startsWith(String(value).toLowerCase())
-              : String(fieldValue).startsWith(String(value));
+            return String(fieldValue).toLowerCase().startsWith(String(value).toLowerCase());
           });
         }
         break;
@@ -224,9 +224,7 @@ function createQuery<T>(
           const fieldValue = (item as any)[field];
           if (fieldValue == null) return false;
           
-          return ignoreCase 
-            ? String(fieldValue).toLowerCase().includes(String(value).toLowerCase())
-            : String(fieldValue).includes(String(value));
+          return String(fieldValue).toLowerCase().includes(String(value).toLowerCase());
         });
         break;
         
@@ -266,52 +264,55 @@ function createQuery<T>(
  */
 function createOptimizedQuery<T>(
   table: EntityTable<T>,
-  filters: Filter[],
-  limit: number = 100
+  filters: Filter<T>[], // Add the type parameter here
+  limit: number = 500
 ): Promise<T[]> {
   // If no filters, just return all records up to the limit
+  console.log(`Creating optimized query with ${filters.length} filters, limit: ${limit}, table: ${table.name}`);
   if (filters.length === 0) {
+    console.log(`No filters applied, returning up to ${limit} records.`);
     return table.limit(limit).toArray();
   }
   
   // Try to find an indexed field to use with where() for the first filter
   const primaryFilter = filters[0];
+  console.log(`Primary filter: ${primaryFilter.field} ${primaryFilter.operator} ${primaryFilter.value}`);
   let collection;
   
   // First filter uses where() if possible for performance
   try {
+    console.log(`Applying primary filter: ${primaryFilter.field} ${primaryFilter.operator} ${primaryFilter.value}`);
     if (primaryFilter.operator === 'equals') {
-      collection = table.where(primaryFilter.field).equals(primaryFilter.value);
-    } else if (primaryFilter.operator === 'startsWith' && primaryFilter.ignoreCase !== false) {
-      collection = table.where(primaryFilter.field).startsWithIgnoreCase(primaryFilter.value);
+      console.log(`Using where() for equals on ${primaryFilter.field}`);
+      collection = table.where(primaryFilter.field as string).equals(primaryFilter.value);
     } else if (primaryFilter.operator === 'startsWith') {
-      collection = table.where(primaryFilter.field).startsWith(primaryFilter.value);
+      // note we always ignore case
+      collection = table.where(primaryFilter.field as string).startsWithIgnoreCase(primaryFilter.value);
     } else if (primaryFilter.operator === 'greaterThan') {
-      collection = table.where(primaryFilter.field).above(primaryFilter.value);
+      collection = table.where(primaryFilter.field as string).above(primaryFilter.value);
     } else if (primaryFilter.operator === 'lessThan') {
-      collection = table.where(primaryFilter.field).below(primaryFilter.value);
+      collection = table.where(primaryFilter.field as string).below(primaryFilter.value);
     } else if (primaryFilter.operator === 'between' && Array.isArray(primaryFilter.value) && primaryFilter.value.length === 2) {
-      collection = table.where(primaryFilter.field).between(primaryFilter.value[0], primaryFilter.value[1]);
+      collection = table.where(primaryFilter.field as string).between(primaryFilter.value[0], primaryFilter.value[1]);
     } else {
       // Default to collection if the operator doesn't match any where() methods
       collection = table.toCollection();
     }
   } catch (error) {
     // If where() fails (e.g., field is not indexed), fall back to toCollection
+    console.warn(`Failed to apply where() for ${primaryFilter.field} with operator ${primaryFilter.operator}. Falling back to collection.`);
     collection = table.toCollection();
   }
   
   // Apply remaining filters using filter() method
   for (let i = collection ? 1 : 0; i < filters.length; i++) {
     const filter = filters[i];
-    const { field, operator, value, ignoreCase = true } = filter;
+    const { field, operator, value } = filter;
     
     // Apply the filter using the same logic as in createQuery
     switch (operator) {
       case 'equals':
-        collection = ignoreCase
-          ? collection.filter(item => (item as any)[field]?.toLowerCase() === value?.toLowerCase())
-          : collection.filter(item => (item as any)[field] === value);
+        collection = collection.filter(item => (item as any)[field]?.toLowerCase() === value?.toLowerCase());
         break;
       
       case 'startsWith':
@@ -319,9 +320,7 @@ function createOptimizedQuery<T>(
           const fieldValue = (item as any)[field];
           if (fieldValue == null) return false;
           
-          return ignoreCase 
-            ? String(fieldValue).toLowerCase().startsWith(String(value).toLowerCase())
-            : String(fieldValue).startsWith(String(value));
+          return String(fieldValue).toLowerCase().startsWith(String(value).toLowerCase());
         });
         break;
       
@@ -330,9 +329,7 @@ function createOptimizedQuery<T>(
           const fieldValue = (item as any)[field];
           if (fieldValue == null) return false;
           
-          return ignoreCase 
-            ? String(fieldValue).toLowerCase().includes(String(value).toLowerCase())
-            : String(fieldValue).includes(String(value));
+          return String(fieldValue).toLowerCase().includes(String(value).toLowerCase());
         });
         break;
         
@@ -354,11 +351,14 @@ function createOptimizedQuery<T>(
         break;
     }
   }
-  
-  // Apply limit and convert to array
-  return collection
+  const result = collection
     .limit(limit)
     .toArray();
+
+  console.log('result', result);
+  console.log(`Optimized query complete. Returning up to ${limit} records.`);
+  // Apply limit and convert to array
+  return result;
 }
 
 export const debugQB = async (): Promise<void> => {
@@ -368,13 +368,11 @@ export const debugQB = async (): Promise<void> => {
                 field: 'activityId',
                 operator: 'equals',
                 value: 1,
-                ignoreCase: false
             },
             {
                 field: 'productName',
                 operator: 'equals',
                 value: 'Rifter',
-                ignoreCase: false
             },
         ], 100);
         console.log('Query Result:', result);

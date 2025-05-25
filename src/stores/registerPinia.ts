@@ -4,6 +4,6 @@ import type { App } from 'vue'
 
 const pinia = createPinia()
 
-export function registerStore(app: App) {
+export function registerPinia(app: App) {
   app.use(pinia)
 }

@@ -10,6 +10,7 @@ Name | Type | Description | Notes
 **description** | **string** |  | [optional] [default to undefined]
 **iconId** | **number** |  | [optional] [default to undefined]
 **graphicId** | **number** |  | [optional] [default to undefined]
+**marketGroupId** | **number** |  | [optional] [default to undefined]
 
 ## Example
 
@@ -22,6 +23,7 @@ const instance: InvTypeDto = {
     description,
     iconId,
     graphicId,
+    marketGroupId,
 };
 ```
 
