@@ -6,7 +6,8 @@ import MeCombobox from '@components/shared/MeCombobox.vue';
 import MeButtonGroup from '@components/shared/MeButtonGroup.vue';
 import MeSwitch from '@components/shared/MeSwitch.vue';
 import { createComboboxHandler } from './ComboboxHandler';
-import type { BlueprintDto, InvCategoryDto } from '@/api-client';
+import type { BlueprintDto, InvCategoryDto, MarketGroupNodeDto } from '@/api-client';
+import { useGroupTreeStore } from '@/stores';
 
 export default defineComponent({
     name: 'SearchControls',
@@ -19,13 +20,15 @@ export default defineComponent({
       data() {
         return {
             mainSearchString: "",
-            selectedCategories: [1, 2, 3],
             viewCats: [] as InvCategoryDto[],
             bpMode: true,
             
             // Will initialize these in created hook
             typeCombobox: null as any,
-            groupsCombobox: null as any
+            // groupsCombobox: null as any
+            groupTreeStore: useGroupTreeStore(),
+            allowedMarketGroups: [2],
+            marketGroupOptions : [] as MarketGroupNodeDto[],
         };
     },
     
@@ -85,47 +88,34 @@ export default defineComponent({
             areItemsEqual: (arr1, arr2) => areArraysEqualByField(arr1, arr2, 'blueprintId'),
             defaultSearchMode: 'startsWith'
         });
-        
-        // Initialize groupsCombobox
-        this.groupsCombobox = createComboboxHandler<InvCategoryDto>({
-            labelField: 'categoryName',
-            valueField: 'categoryId',
-            searchFn: async (query, limit = 1000, isStartsWith = true) =>
-                isStartsWith
-                    ? searchStartsWith(db.invCategories, 'categoryName', query, limit)
-                    : searchContains(db.invCategories, 'categoryName', query, limit),
-            onSelect: async (item) => {
-                console.log('Selected category:', item);
-                await this.addCategory(item.categoryId);
-                this.viewCats = await this.getCategories();
-            },
-            areItemsEqual: (arr1, arr2) => areArraysEqualByField(arr1, arr2, 'categoryId'),
-            defaultSearchMode: 'contains'
-        });
+
+        console.log(this.groupTreeStore)
+        this.marketGroupOptions = this.groupTreeStore.getGroupById(2);
+        console.log('Market Group Options:', this.marketGroupOptions);
     },
     
     methods: {
-        async addCategory(categoryId: number) {
-            if (!this.selectedCategories.includes(categoryId)) {
-                this.selectedCategories.push(categoryId);
-                console.log('Added category:', categoryId);
-            }
-        },
+        // async addCategory(categoryId: number) {
+        //     if (!this.selectedCategories.includes(categoryId)) {
+        //         this.selectedCategories.push(categoryId);
+        //         console.log('Added category:', categoryId);
+        //     }
+        // },
         
-        async removeCategory(categoryId: number) {
-            const index = this.selectedCategories.indexOf(categoryId);
-            if (index !== -1) {
-                this.selectedCategories.splice(index, 1);
-                console.log('Removed category:', categoryId);
-            }
-        },
+        // async removeCategory(categoryId: number) {
+        //     const index = this.selectedCategories.indexOf(categoryId);
+        //     if (index !== -1) {
+        //         this.selectedCategories.splice(index, 1);
+        //         console.log('Removed category:', categoryId);
+        //     }
+        // },
         
-        async getCategories() {
-            return await db.invCategories
-                .where('categoryId')
-                .anyOf(this.selectedCategories)
-                .toArray();
-        }
+        // async getCategories() {
+        //     return await db.invCategories
+        //         .where('categoryId')
+        //         .anyOf(this.selectedCategories)
+        //         .toArray();
+        // }
     }
 });
 </script>
@@ -152,6 +142,11 @@ export default defineComponent({
             @update:isStartsWith="(value) => typeCombobox.isStartsWith.value = value" 
             class="search-input-container" 
         />
+        <select name="filterOptions" id="">
+            <option v-for="group in marketGroupOptions" :value="group.marketGroupId" :key="group.marketGroupId">
+                {{ group.marketGroupName }}
+            </option>
+        </select>
         <!-- <div class="filter">
             add filter
             <MeCombobox 
@@ -188,6 +183,7 @@ export default defineComponent({
     margin: 1rem;
     transform: translateY(0px);
     transition: transform 0.3s ease-in-out;
+    z-index: 2;
 
     @starting-style {
         transform: translateY(-100%);

@@ -5,11 +5,13 @@ import {
     InvGroupsApi,
     InvTypesApi,
     TypeNamesApi,
+    InvMarketGroupsApi,
     type BlueprintDto, 
     type InvCategoryDto,
     type InvGroupDto,
     type InvTypeDto,
     type TypeNameDto,
+    type MarketGroupNodeDto
 } from "../api-client";
 
 /**
@@ -22,6 +24,8 @@ class ApiService {
     private invGroupsApi: InvGroupsApi;
     private invCategoriesApi: InvCategoriesApi;
     private typeNamesApi: TypeNamesApi;
+    private invMarketGroupsApi: InvMarketGroupsApi;
+
 
     constructor(config: Configuration) {
         this.invTypesApi = new InvTypesApi(config);
@@ -29,6 +33,7 @@ class ApiService {
         this.invGroupsApi = new InvGroupsApi(config);
         this.invCategoriesApi = new InvCategoriesApi(config);
         this.typeNamesApi = new TypeNamesApi(config);
+        this.invMarketGroupsApi = new InvMarketGroupsApi(config);
     }
 
     /**
@@ -93,6 +98,20 @@ class ApiService {
             throw error;
         }
     }
+
+    /**
+     * Get market group tree
+     */
+    public async getMarketGroupTree(): Promise<MarketGroupNodeDto[]> {
+        try {
+            const response = await this.invMarketGroupsApi.apiInvMarketGroupsTreeGet();
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching Market Group Tree:", error);
+            throw error;
+        }
+    }
+
 }
 
 const config = new Configuration({

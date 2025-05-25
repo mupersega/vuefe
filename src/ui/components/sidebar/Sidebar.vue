@@ -10,8 +10,9 @@ const navItems: NavLinkProps[] = [
   { to: "/foundry", icon: ['fas', 'industry'], text: "Foundry" },
   { to: "/Barracks", icon: ['fas', 'users'], text: "Barracks" },
   { to: "/archive", icon: ['fas', 'book'], text: "Archive" },
-  { to: "/sdf", icon: ['fas', 'sliders'], text: "Lookup" },
-  { to: "/bridge", icon: ['fas', 'shield-cat'], text: "Bridge" },
+  // { to: "/sdf", icon: ['fas', 'sliders'], text: "Lookup" },
+  { to: "/bridge", icon: ['fas', 'sliders'], text: "Bridge" },
+  // { to: "/bridge", icon: ['fas', 'shield-cat'], text: "Bridge" },
 ];
 </script>
 <template>
