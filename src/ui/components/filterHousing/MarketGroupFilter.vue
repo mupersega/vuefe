@@ -1,12 +1,16 @@
 <template>
   <div class="market-group">
     <div class="node-header" @click="toggleExpanded">
-      <span v-if="hasChildren" class="toggle">
-        {{ expanded ? '▼' : '▶' }}
-      </span>
-      <span>{{ baseNode.marketGroupName }}</span>
-      <button @click="includeThis">include</button>
-      <button v-if="hasChildren" @click="includeAll">include all</button>
+      <div class="header-text">
+        <span v-if="hasChildren" class="toggle">
+          {{ expanded ? '▼' : '▶' }}
+        </span>
+        <span>{{ baseNode.marketGroupName }}</span>
+      </div>
+      <div class="header-actions">
+        <button @click="includeThis">include</button>
+        <button v-if="hasChildren" @click="includeAll">include all</button>
+      </div>
     </div>
     <div v-if="expanded && hasChildren" class="children">
       <MarketGroupFilter
@@ -80,10 +84,14 @@ export default defineComponent({
 .market-group {
   /* border-left: 1px solid var(--translucent-white-1); */
   display: flex;
-  margin-left: 1rem;
   flex-direction: column;
+  background-color: var(--translucent-white-02);
   /* border: 1px solid var(--translucent-white-1); */
-  padding: 0.5rem;
+  margin-left: 1rem;
+}
+
+.market-group:first-child {
+  margin-left: 0;
 }
 
 .node-header {
@@ -92,18 +100,40 @@ export default defineComponent({
   gap: 0.5rem;
   cursor: pointer;
   user-select: none;
-  margin-left: 0.5rem;
-  /* border-bottom: 1px solid var(--translucent-white-3); */
+  padding: 0.5rem;
+  background-color: var(--jet);
+  border-bottom: 1px solid var(--translucent-white-1);
+  border-left: 1px solid var(--translucent-white-1);
 }
 
-.market-group:hover {
-  /* color: var(--flame); */
-  /* border-color: var(--translucent-white-3); */
-  transition: all 0.15s ease;
-  /* background-color: var(--translucent-white-1); */
-  /* box-shadow: 0 0 5px var(--translucent-white-2); */
-  transition: all 0.15s ease;
+.header-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-grow: 1;
 }
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+
+.node-header:hover {
+  color: var(--flame);
+  border-color: turquoise;
+  transition: all 0.15s ease;
+  background-color: var(--translucent-white-02);
+  box-shadow: 0 0 5px var(--translucent-white-2);
+}
+
+/* .market-group:hover {
+  border-color: var(--translucent-white-3);
+  transition: all 0.15s ease;
+  background-color: var(--translucent-white-02);
+  box-shadow: 0 0 5px var(--translucent-white-2);
+  transition: all 0.15s ease;
+} */
 
 .toggle {
   cursor: pointer;

@@ -113,20 +113,18 @@ export default {
     height: 100%;
     background-color: var(--jet);
     box-shadow: 0 0 3px var(--night);
-    padding: 1rem;
+    gap: 1rem;
 }
 
 .all-filters {
-    border-radius: 0.5rem;
-    border: 1px solid var(--translucent-white-3);
-    box-shadow: 1px 1px 3px var(--night);
-    background-color: var(--jet);
-    margin-bottom: 1rem;
+    /* border: 1px solid var(--translucent-white-3); */
     grid-column: 2 / 2;
     grid-row: 1 / 2;
     overflow-y: scroll;
-    border: 1px solid var(--translucent-white-3);
+    border-top: 1px solid var(--translucent-white-3);
+    /* border: 1px solid var(--translucent-white-3); */
     flex: 1;
+    /* padding-right: 1rem; */
 }
 
 </style>
