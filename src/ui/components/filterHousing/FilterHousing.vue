@@ -1,6 +1,10 @@
-<template>
-    <div class="filter-housing">
-        <button popovertarget="filterPopover"> Group Filters</button>
+<template>    <div class="filter-housing">
+        <button class="filter-button" popovertarget="filterPopover">
+            <span class="icon">
+                <font-awesome-icon :icon="['fas', 'filter']" />
+            </span>
+            <span class="text">Group Filters</span>
+        </button>
         <div id="filterPopover" class="filterPopover" popover="manual">
             <div class="filter-selection-container">
                 <select
@@ -19,6 +23,8 @@
                     <MarketGroupFilter
                         v-if="baseNode"
                         :baseNode="baseNode"
+                        @include-this="handleIncludeThis"
+                        @include-all="handleIncludeAll"
                     />
                 </div>
             </div>
@@ -50,6 +56,24 @@ export default {
                 console.warn('No market group found for selected value:', selectedValue);
             }
         },
+        
+        /**
+         * Handle the include-this event from MarketGroupFilter
+         * @param node - The market group node to include
+         */
+        handleIncludeThis(node: MarketGroupNodeDto) {
+            console.log('Include this node:', node.marketGroupName);
+            // TODO: Implement filter application logic
+        },
+        
+        /**
+         * Handle the include-all event from MarketGroupFilter
+         * @param node - The market group node to include all children from
+         */
+        handleIncludeAll(node: MarketGroupNodeDto) {
+            console.log('Include all from node:', node.marketGroupName);
+            // TODO: Implement filter application logic
+        },
     },
     data() {
         return {
@@ -78,12 +102,33 @@ export default {
     border: 1px solid var(--translucent-white-3);
     margin: 1rem;
     transform: translateY(0px);
-    transition: transform 0.3s ease-in-out;
+    transition: transform 0.3s cubic-bezier(0.68, 0, 0.265, 1.2);
     z-index: 2;
+}
 
-    @starting-style {
-        transform: translateY(-100%);
-    }
+.filter-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background-color: var(--eerie-black);
+    color: var(--gray);
+    border: 1px solid var(--translucent-white-3);
+    border-radius: 0.3rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.filter-button:hover {
+    color: var(--flame);
+    border-color: var(--flame);
+    text-shadow: 0 0 0.5px currentColor;
+}
+
+.filter-button .icon {
+    font-size: 0.8rem;
 }
 
 .filter-select {
@@ -132,11 +177,7 @@ export default {
     transition: top 0.3s cubic-bezier(0.68, 0, 0.265, 1.2), 
                 opacity 0.3s cubic-bezier(0.68, 0, 0.265, 1.2);
     opacity: 1;
-
-    @starting-style {
-        top: -100%;
-        opacity: 0;
-    }
+    z-index: 100;
 }
 
 .filter-selection-container {
@@ -148,19 +189,46 @@ export default {
     top: 0;
     height: 100%;
     background-color: var(--jet);
-    box-shadow: 0 0 3px var(--night);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     gap: 1rem;
+    border-left: 1px solid var(--translucent-white-3);
+    animation: slideIn 0.3s cubic-bezier(0.68, 0, 0.265, 1.2);
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
 .all-filters {
-    /* border: 1px solid var(--translucent-white-3); */
-    grid-column: 2 / 2;
-    grid-row: 1 / 2;
-    overflow-y: scroll;
+    overflow-y: auto;
     border-top: 1px solid var(--translucent-white-3);
-    /* border: 1px solid var(--translucent-white-3); */
     flex: 1;
-    /* padding-right: 1rem; */
+    scrollbar-width: thin;
+    scrollbar-color: var(--flame) var(--eerie-black);
+}
+
+.all-filters::-webkit-scrollbar {
+    width: 6px;
+}
+
+.all-filters::-webkit-scrollbar-track {
+    background: var(--eerie-black);
+}
+
+.all-filters::-webkit-scrollbar-thumb {
+    background-color: var(--translucent-white-2);
+    border-radius: 6px;
+}
+
+.all-filters::-webkit-scrollbar-thumb:hover {
+    background-color: var(--flame);
 }
 
 </style>

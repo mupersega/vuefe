@@ -2,17 +2,25 @@
   <div class="market-group">
     <div class="node-header" @click="toggleExpanded">
       <div class="header-text">
-        <span v-if="hasChildren" class="toggle">
-          {{ expanded ? '▼' : '▶' }}
+        <span v-if="hasChildren" class="toggle" @click.stop="toggleExpanded">
+          <font-awesome-icon 
+            :icon="['fas', 'chevron-right']"
+            :class="{ expanded: expanded }"
+          />
         </span>
+        <span v-else class="toggle-placeholder"></span>
         <span>{{ baseNode.marketGroupName }}</span>
       </div>
       <div class="header-actions">
-        <button @click="includeThis">include</button>
-        <button v-if="hasChildren" @click="includeAll">include all</button>
+        <button @click.stop="includeThis">
+          <font-awesome-icon :icon="['fas', 'plus']" /> Include
+        </button>
+        <button v-if="hasChildren" @click.stop="includeAll">
+          <font-awesome-icon :icon="['fas', 'list-check']" /> Include All
+        </button>
       </div>
     </div>
-    <div v-if="expanded && hasChildren" class="children">
+    <div v-if="hasChildren" class="children" :style="{ maxHeight: expanded ? '1000px' : '0px' }">
       <MarketGroupFilter
         v-for="child in baseNode.children"
         :key="child.marketGroupId"
@@ -82,17 +90,22 @@ export default defineComponent({
 
 <style scoped>
 .market-group {
-  /* border-left: 1px solid var(--translucent-white-1); */
   display: flex;
   flex-direction: column;
-  background-color: var(--translucent-white-1);
-  /* border: 1px solid var(--translucent-white-1); */
-  margin-left: 1rem;
+  background-color: var(--translucent-white-03);
+  margin-left: 0.75rem;
   font-size: 0.7rem;
+  border-left: 1px solid var(--translucent-white-1);
+  position: relative;
+}
+
+.market-group:not(:last-child) {
+  margin-bottom: 1px;
 }
 
 .all-filters>.market-group:first-child {
   margin-left: 0;
+  border-left: none;
 }
 
 .node-header {
@@ -101,10 +114,11 @@ export default defineComponent({
   gap: 0.5rem;
   cursor: pointer;
   user-select: none;
-  padding: 0.5rem;
+  padding: 0.5rem 0.75rem;
   background-color: var(--jet);
   border-bottom: 1px solid var(--translucent-white-1);
-  border-left: 1px solid var(--translucent-white-1);
+  position: relative;
+  transition: all 0.15s cubic-bezier(0.68, 0, 0.265, 1.2);
 }
 
 .header-text {
@@ -117,41 +131,74 @@ export default defineComponent({
 .header-actions {
   display: flex;
   gap: 0.5rem;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
 }
 
+.node-header:hover .header-actions {
+  opacity: 1;
+}
 
 .node-header:hover {
   color: var(--flame);
   border-color: turquoise;
-  transition: all 0.1s ease;
-  border-left: 3px solid var(--flame);
-  /* background-color: var(--translucent-white-02); */
-  box-shadow: 0 0 5px var(--translucent-white-2);
+  background-color: var(--eerie-black);
+  text-shadow: 0 0 0.5px currentColor;
 }
 
-/* .market-group:hover {
-  border-color: var(--translucent-white-3);
-  transition: all 0.15s ease;
-  background-color: var(--translucent-white-02);
-  box-shadow: 0 0 5px var(--translucent-white-2);
-  transition: all 0.15s ease;
-} */
+.node-header:hover::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 3px;
+  background-color: var(--flame);
+}
 
 .toggle {
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.7rem;
   user-select: none;
+  color: var(--gray);
+  transition: color 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  position: relative;
 }
+
+.toggle-placeholder {
+  width: 16px;
+  display: inline-block;
+}
+
+.toggle svg {
+  transition: transform 0.3s cubic-bezier(0.68, 0, 0.265, 1.2);
+}
+
+.toggle .expanded {
+  transform: rotate(90deg);
+}
+
+.node-header:hover .toggle {
+  color: var(--flame);
+}
+
+.toggle:hover svg:not(.expanded) {
+  transform: rotate(30deg);
+}
+
+.toggle:hover svg.expanded {
+  transform: rotate(110deg);
+}
+
 .children {
-  top: -100%;
-  transition: transform 0.3s ease-in-out, opacity 0.3s 0.1s ease-in-out;
-  transform: translateY(0);
-  opacity: 1;
-  @starting-style {
-    border-left: 1px solid var(--translucent-white-3);
-    transform: translateY(-10%);
-    opacity: 0;
-  }
+  overflow: hidden;
+  max-height: 1000px; /* Set a reasonable max height */
+  transition: max-height 0.3s cubic-bezier(0.68, 0, 0.265, 1.2);
 }
 
 button {
@@ -164,8 +211,11 @@ button {
   cursor: pointer;
   transition: all 0.15s ease;
 }
+
 button:hover {
   color: var(--flame);
   border-color: var(--flame);
+  text-shadow: 0 0 0.5px currentColor;
+  box-shadow: 0 0 3px rgba(255, 89, 36, 0.2);
 }
 </style>
