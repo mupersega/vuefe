@@ -85,12 +85,13 @@ export default defineComponent({
   /* border-left: 1px solid var(--translucent-white-1); */
   display: flex;
   flex-direction: column;
-  background-color: var(--translucent-white-02);
+  background-color: var(--translucent-white-1);
   /* border: 1px solid var(--translucent-white-1); */
   margin-left: 1rem;
+  font-size: 0.7rem;
 }
 
-.market-group:first-child {
+.all-filters>.market-group:first-child {
   margin-left: 0;
 }
 
@@ -122,8 +123,9 @@ export default defineComponent({
 .node-header:hover {
   color: var(--flame);
   border-color: turquoise;
-  transition: all 0.15s ease;
-  background-color: var(--translucent-white-02);
+  transition: all 0.1s ease;
+  border-left: 3px solid var(--flame);
+  /* background-color: var(--translucent-white-02); */
   box-shadow: 0 0 5px var(--translucent-white-2);
 }
 

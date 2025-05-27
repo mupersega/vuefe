@@ -4,6 +4,7 @@
         <div id="filterPopover" class="filterPopover" popover="manual">
             <div class="filter-selection-container">
                 <select
+                    class="filter-select"
                     name="filterOptions" id=""
                     v-on:change="handleFilterSelect">
                     <option value="0" disabled selected>Select a market group</option>
@@ -85,6 +86,40 @@ export default {
     }
 }
 
+.filter-select {
+    width: 100%;
+    padding: 0.25rem 0.75rem;
+    box-sizing: border-box;
+    border: 1px solid var(--translucent-white-3);
+    border-radius: 0.5rem;
+    height: 2rem;
+    background-color: var(--eerie-black);
+    color: var(--gray);
+    font-size: 0.7rem;
+    outline: none;
+    transition: all 0.15s ease;
+    margin: 0.75rem 0.75rem 0 0.75rem;
+    width: calc(100% - 1.5rem);
+}
+
+.filter-select:hover {
+    color: var(--platinum);
+    border-color: turquoise;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--flame);
+    color: var(--flame);
+    text-shadow: 0 0 0.5px currentColor;
+}
+
+/* Apply flame color to select with a selected option */
+.filter-select:not(:invalid) {
+    color: var(--flame);
+    text-shadow: 0 0 0.5px currentColor;
+}
+
 .filterPopover {
     position: fixed;
     top: 0;
@@ -103,6 +138,7 @@ export default {
         opacity: 0;
     }
 }
+
 .filter-selection-container {
     display: flex;
     flex-direction: column;
