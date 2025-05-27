@@ -4,12 +4,13 @@
         <main>
             <div class="top-bar" v-if="showSearchControls">
                 <SearchControls />
-                <div class="staging">
+                <FilterHousing />
+                <!-- <div class="staging">
                     <div class="item"
                     v-for="item in stagingItems">
                     item: {{ item.typeName }} - {{ item.typeId }}
-                </div>
-                </div>
+                    </div>
+                </div> -->
             </div>
             <div class="page-content">
                 <slot></slot>
@@ -23,12 +24,14 @@ import { defineComponent } from 'vue';
 import Sidebar from '@components/sidebar/Sidebar.vue';
 import SearchControls from '@components/searchControls/SearchControls.vue';
 import { useStagingStore } from '@/stores/useStagingStore';
+import FilterHousing from '../components/filterHousing/FilterHousing.vue';
 
 export default defineComponent({
     name: 'MainLayout',
     components: {
         Sidebar,
-        SearchControls
+        SearchControls,
+        FilterHousing
     },
     props: {
         showSearchControls: {
@@ -56,6 +59,7 @@ export default defineComponent({
         "nav main";
     height: 100vh;
     width: 100vw;
+    position: relative;
 }
 
 .top-bar {

@@ -4,7 +4,7 @@ import { searchStartsWith, searchContains, db } from '@services/db';
 
 import MeCombobox from '@components/shared/MeCombobox.vue';
 import { createComboboxHandler } from './ComboboxHandler';
-import MarketGroupFilter from '@components/searchControls/MarketGroupFilter.vue'; // Use relative path for clarity
+import MarketGroupFilter from '@/ui/components/filterHousing/MarketGroupFilter.vue'; // Use relative path for clarity
 
 import MeButtonGroup from '@components/shared/MeButtonGroup.vue';
 import MeSwitch from '@components/shared/MeSwitch.vue';
@@ -92,20 +92,7 @@ export default defineComponent({
         }
     },
     methods: {
-        /**
-         * Handle selection from the market group dropdown
-         * @param event - The change event from the select element
-         */
-        handleFilterSelect(event: Event) {
-            const target = event.target as HTMLSelectElement;
-            const selectedValue = parseInt(target.value, 10);
-            const marketGroup = this.marketGroupOptions.find(group => group.marketGroupId === selectedValue);
-            if (marketGroup) {
-                this.baseNode = marketGroup;
-            } else {
-                console.warn('No market group found for selected value:', selectedValue);
-            }
-        },
+
     }
 });
 </script>
@@ -132,18 +119,6 @@ export default defineComponent({
             :showSearchMode="true" 
             :isStartsWith="typeCombobox.isStartsWith.value"
             @update:isStartsWith="(value) => typeCombobox.isStartsWith.value = value"/>
-        <select
-            name="filterOptions" id=""
-            v-on:change="handleFilterSelect">
-            <option v-for="group in marketGroupOptions" :value="group.marketGroupId" :key="group.marketGroupId">
-                {{ group.marketGroupName }}
-            </option>
-        </select>
-        <!-- Only render MarketGroupFilter when baseNode is not null -->
-        <MarketGroupFilter
-            v-if="baseNode"
-            :baseNode="baseNode"
-        />
     </div>
 </template>
 

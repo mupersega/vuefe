@@ -1,7 +1,7 @@
 // db.ts
 import Dexie, { type EntityTable } from 'dexie';
 import type { BlueprintDto, InvCategoryDto, InvGroupDto, InvTypeDto, TypeNameDto} from '../api-client';
-import apiService from './ApiService';
+import apiService from '@/services/apiService';
 
 const db = new Dexie('dexDb') as Dexie & {
   typeNames: EntityTable<TypeNameDto>;
@@ -22,7 +22,6 @@ db.version(1).stores({
 db.open().then(() => {
   console.log('Database opened.');
   seed();
-  
 }).catch((error) => {
     console.error('Failed to open database:', error);
 });

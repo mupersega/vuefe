@@ -1,12 +1,12 @@
 <template>
   <div class="market-group">
-    <div class="node-header">
-      <span v-if="hasChildren" class="toggle" @click="toggleExpanded">
+    <div class="node-header" @click="toggleExpanded">
+      <span v-if="hasChildren" class="toggle">
         {{ expanded ? '▼' : '▶' }}
       </span>
       <span>{{ baseNode.marketGroupName }}</span>
-      <button @click="includeThis">Include This</button>
-      <button v-if="hasChildren || baseNode.hasTypes" @click="includeAll">Include All</button>
+      <button @click="includeThis">include</button>
+      <button v-if="hasChildren" @click="includeAll">include all</button>
     </div>
     <div v-if="expanded && hasChildren" class="children">
       <MarketGroupFilter
@@ -42,6 +42,12 @@ export default defineComponent({
     function toggleExpanded() {
       expanded.value = !expanded.value;
     }
+    function expand() {
+      expanded.value = true;
+    }
+    function collapse() {
+      expanded.value = false;
+    }
     function includeThis() {
       emit('include-this', props.baseNode);
     }
@@ -62,7 +68,9 @@ export default defineComponent({
       includeThis,
       includeAll,
       forwardIncludeThis,
-      forwardIncludeAll
+      forwardIncludeAll,
+      expand,
+      collapse
     };
   }
 });
@@ -70,24 +78,50 @@ export default defineComponent({
 
 <style scoped>
 .market-group {
-  margin-left: 10px;
-  border-left: 1px solid var(--translucent-white-3);
-  padding-left: 10px;
+  /* border-left: 1px solid var(--translucent-white-1); */
+  display: flex;
+  margin-left: 1rem;
+  flex-direction: column;
+  /* border: 1px solid var(--translucent-white-1); */
+  padding: 0.5rem;
 }
+
 .node-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  margin-left: 0.5rem;
+  /* border-bottom: 1px solid var(--translucent-white-3); */
 }
+
+.market-group:hover {
+  /* color: var(--flame); */
+  /* border-color: var(--translucent-white-3); */
+  transition: all 0.15s ease;
+  /* background-color: var(--translucent-white-1); */
+  /* box-shadow: 0 0 5px var(--translucent-white-2); */
+  transition: all 0.15s ease;
+}
+
 .toggle {
   cursor: pointer;
   font-size: 0.9rem;
   user-select: none;
 }
 .children {
-  margin-left: 10px;
-  margin-top: 3px;
+  top: -100%;
+  transition: transform 0.3s ease-in-out, opacity 0.3s 0.1s ease-in-out;
+  transform: translateY(0);
+  opacity: 1;
+  @starting-style {
+    border-left: 1px solid var(--translucent-white-3);
+    transform: translateY(-10%);
+    opacity: 0;
+  }
 }
+
 button {
   background-color: var(--eerie-black);
   color: var(--gray);
