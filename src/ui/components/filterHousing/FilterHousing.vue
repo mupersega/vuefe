@@ -1,39 +1,27 @@
-<template>    <div class="filter-housing">
-        <button class="filter-button" popovertarget="filterPopover">
-            <span class="icon">
-                <font-awesome-icon :icon="['fas', 'filter']" />
-            </span>
-            <span class="text">Group Filters</span>
-        </button>
-        <div id="filterPopover" class="filterPopover" popover="manual">
-            <div class="filter-selection-container">
-                <select
-                    class="filter-select"
-                    name="filterOptions" id=""
-                    v-on:change="handleFilterSelect">
-                    <option value="0" disabled selected>Select a market group</option>
-                    <option v-for="group in marketGroupOptions"
-                        :value="group.marketGroupId"
-                        :key="group.marketGroupId"
-                    >
-                        {{ group.marketGroupName }}
-                    </option>
-                </select>
-                <div class="all-filters">
-                    <MarketGroupFilter
-                        v-if="baseNode"
-                        :baseNode="baseNode"
-                        @include-this="handleIncludeThis"
-                        @include-all="handleIncludeAll"
-                    />
-                </div>
+<template>
+    <!-- <div class="filter-housing"> -->
+        <!-- <button class="filter-button" popovertarget="filterPopover">
+        <span class="icon">
+            <font-awesome-icon :icon="['fas', 'filter']" />
+        </span>
+        <span class="text">Group Filters</span>
+    </button> -->
+        <div class="filter-selection-container">
+            <select class="filter-select" name="filterOptions" id="" @change="setBaseNode">
+                <option value="0" disabled selected>Select a market group</option>
+                <option v-for="group in marketGroupOptions" :value="group.marketGroupId" :key="group.marketGroupId">
+                    {{ group.marketGroupName }}
+                </option>
+            </select>
+            <div class="all-filters">
+                <MarketGroupFilter v-if="baseNode" :baseNode="baseNode"/>
             </div>
         </div>
-    </div>
+    <!-- </div> -->
 </template>
 <script lang="ts">
 import { type MarketGroupNodeDto } from '@/api-client';
-import { useGroupTreeStore } from '@/stores/useGroupTreeStore';
+import { useGroupTree } from '@/stores/useGroupTreeStore';
 import MarketGroupFilter from './MarketGroupFilter.vue';
 
 export default {
@@ -46,7 +34,7 @@ export default {
          * Handle selection from the market group dropdown
          * @param event - The change event from the select element
          */
-        handleFilterSelect(event: Event) {
+        setBaseNode(event: Event) {
             const target = event.target as HTMLSelectElement;
             const selectedValue = parseInt(target.value, 10);
             const marketGroup = this.marketGroupOptions.find(group => group.marketGroupId === selectedValue);
@@ -55,24 +43,6 @@ export default {
             } else {
                 console.warn('No market group found for selected value:', selectedValue);
             }
-        },
-        
-        /**
-         * Handle the include-this event from MarketGroupFilter
-         * @param node - The market group node to include
-         */
-        handleIncludeThis(node: MarketGroupNodeDto) {
-            console.log('Include this node:', node.marketGroupName);
-            // TODO: Implement filter application logic
-        },
-        
-        /**
-         * Handle the include-all event from MarketGroupFilter
-         * @param node - The market group node to include all children from
-         */
-        handleIncludeAll(node: MarketGroupNodeDto) {
-            console.log('Include all from node:', node.marketGroupName);
-            // TODO: Implement filter application logic
         },
     },
     data() {
@@ -83,7 +53,7 @@ export default {
     },
     computed: {
         groupTreeStore() {
-            return useGroupTreeStore();
+            return useGroupTree();
         },
         marketGroupOptions() {
             return this.groupTreeStore.tree;
@@ -104,6 +74,7 @@ export default {
     transform: translateY(0px);
     transition: transform 0.3s cubic-bezier(0.68, 0, 0.265, 1.2);
     z-index: 2;
+    overflow: hidden;
 }
 
 .filter-button {
@@ -165,25 +136,10 @@ export default {
     text-shadow: 0 0 0.5px currentColor;
 }
 
-.filterPopover {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: var(--translucent-white-01);
-    border: none;
-    backdrop-filter: blur(1px);
-    transition: top 0.3s cubic-bezier(0.68, 0, 0.265, 1.2), 
-                opacity 0.3s cubic-bezier(0.68, 0, 0.265, 1.2);
-    opacity: 1;
-    z-index: 100;
-}
-
 .filter-selection-container {
     display: flex;
     flex-direction: column;
-    width: 400px;
+    width: 300px;
     position: absolute;
     right: 0;
     top: 0;
@@ -192,22 +148,10 @@ export default {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     gap: 1rem;
     border-left: 1px solid var(--translucent-white-3);
-    animation: slideIn 0.3s cubic-bezier(0.68, 0, 0.265, 1.2);
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
 }
 
 .all-filters {
-    overflow-y: auto;
+    overflow-y: scroll;
     border-top: 1px solid var(--translucent-white-3);
     flex: 1;
     scrollbar-width: thin;
@@ -230,5 +174,4 @@ export default {
 .all-filters::-webkit-scrollbar-thumb:hover {
     background-color: var(--flame);
 }
-
 </style>

@@ -1,0 +1,89 @@
+.tippy-box[data-theme~=eve-theme] {
+  background-color: var(--jet);
+  border: 1px solid var(--translucent-white-2);
+  border-radius: 0.25rem;
+  color: var(--platinum);
+  font-size: 0.7rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4), 0 0 2px rgba(0, 0, 0, 0.5);
+  transition: box-shadow 0.15s ease, color 0.15s ease;
+}
+
+/* Arrow styling */
+.tippy-box[data-theme~=eve-theme][data-placement^=top] > .tippy-arrow:before {
+  border-top-color: var(--jet);
+}
+.tippy-box[data-theme~=eve-theme][data-placement^=bottom] > .tippy-arrow:before {
+  border-bottom-color: var(--jet);
+}
+.tippy-box[data-theme~=eve-theme][data-placement^=left] > .tippy-arrow:before {
+  border-left-color: var(--jet);
+}
+.tippy-box[data-theme~=eve-theme][data-placement^=right] > .tippy-arrow:before {
+  border-right-color: var(--jet);
+}
+
+/* Shadow styling */
+.tippy-box[data-theme~=eve-theme] > .tippy-backdrop {
+  background-color: var(--jet);
+}
+
+/* SVG arrow styling */
+.tippy-box[data-theme~=eve-theme] > .tippy-svg-arrow {
+  fill: var(--jet);
+}
+
+/* Create the border effects for the arrow */
+.tippy-box[data-theme~=eve-theme]::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 0.25rem;
+  border: 0px solid transparent;
+  pointer-events: none;
+  transition: border-color 0.15s ease, border-width 0.15s ease, box-shadow 0.15s ease;
+  z-index: -1;
+}
+
+/* Hover state styling */
+.tippy-box[data-theme~=eve-theme]:hover::after {
+  border: 1px solid var(--flame);
+}
+
+/* Content styling */
+.tippy-content {
+  padding: 0.25rem 0.75rem;
+}
+
+/* Left accent border styling - adding flame accent (without transition) */
+.tippy-box[data-theme~=eve-theme] {
+  border-left: 3px solid var(--flame);
+}
+
+/* Add subtle glow effect on hover */
+.tippy-box[data-theme~=eve-theme]:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 6px rgba(235, 94, 40, 0.4);
+}
+
+/* Selected/active styling */
+.tippy-box[data-theme~=eve-theme][data-state=visible] {
+  animation: tippy-glow 0.2s ease-out forwards;
+}
+
+/* Add a flame-colored accent text for important content */
+.tippy-box[data-theme~=eve-theme] strong {
+  color: var(--flame);
+  text-shadow: 0 0 0.5px currentColor;
+}
+
+/* Removed animation on the left border */
+@keyframes tippy-glow {
+  0% {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4), 0 0 2px rgba(0, 0, 0, 0.5);
+  }
+  100% {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 6px rgba(235, 94, 40, 0.4);
+  }
+}

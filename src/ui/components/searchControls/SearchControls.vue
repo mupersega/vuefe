@@ -2,16 +2,14 @@
 import { defineComponent } from 'vue';
 import { searchStartsWith, searchContains, db } from '@services/db';
 
-import MeCombobox from '@components/shared/MeCombobox.vue';
 import { createComboboxHandler } from './ComboboxHandler';
-import MarketGroupFilter from '@/ui/components/filterHousing/MarketGroupFilter.vue'; // Use relative path for clarity
 
+import MeCombobox from '@components/shared/MeCombobox.vue';
+import MarketGroupFilter from '@components/FilterHousing/MarketGroupFilter.vue';
 import MeButtonGroup from '@components/shared/MeButtonGroup.vue';
 import MeSwitch from '@components/shared/MeSwitch.vue';
 
-import type { BlueprintDto, InvCategoryDto, MarketGroupNodeDto } from '@/api-client';
-import { useGroupTreeStore } from '@/stores/useGroupTreeStore';
-import { useStagingStore } from '@/stores/useStagingStore';
+import type { BlueprintDto, InvCategoryDto, MarketGroupNodeDto } from '@api-client/models';
 
 export default defineComponent({
     name: 'SearchControls',
@@ -37,17 +35,7 @@ export default defineComponent({
     },
 
     computed: {
-        stagingStore() {
-            return useStagingStore();
-        },
-        groupTreeStore() {
-            return useGroupTreeStore();
-        },
-        marketGroupOptions() {
-            return this.groupTreeStore.tree;
-        },
         typeCombobox() {
-            // Helper function to compare arrays by a specific field
             const areArraysEqualByField = <T>(arr1: T[], arr2: T[], field: keyof T): boolean => {
                 if (arr1.length !== arr2.length) {
                     return false;
@@ -91,9 +79,6 @@ export default defineComponent({
             });
         }
     },
-    methods: {
-
-    }
 });
 </script>
 

@@ -12,11 +12,11 @@
         <span>{{ baseNode.marketGroupName }}</span>
       </div>
       <div class="header-actions">
-        <button @click.stop="includeThis">
-          <font-awesome-icon :icon="['fas', 'plus']" /> Include
+        <button @click.stop="includeThis" v-tippy="'Include this group'">
+          <font-awesome-icon :icon="['fas', 'plus']"/>
         </button>
-        <button v-if="hasChildren" @click.stop="includeAll">
-          <font-awesome-icon :icon="['fas', 'list-check']" /> Include All
+        <button v-if="hasChildren" @click.stop="includeAll" v-tippy="'Include all child groups'">
+          <font-awesome-icon :icon="['fas', 'list-check']" />
         </button>
       </div>
     </div>
@@ -34,7 +34,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, type PropType } from 'vue';
-import type { MarketGroupNodeDto } from '@/api-client';
+import type { MarketGroupNodeDto } from '../../../api-client';
 
 export default defineComponent({
   name: 'MarketGroupFilter',
@@ -84,7 +84,7 @@ export default defineComponent({
       expand,
       collapse
     };
-  }
+  },
 });
 </script>
 
@@ -99,10 +99,6 @@ export default defineComponent({
   position: relative;
 }
 
-.market-group:not(:last-child) {
-  margin-bottom: 1px;
-}
-
 .all-filters>.market-group:first-child {
   margin-left: 0;
   border-left: none;
@@ -114,7 +110,7 @@ export default defineComponent({
   gap: 0.5rem;
   cursor: pointer;
   user-select: none;
-  padding: 0.5rem 0.75rem;
+  padding: 0.3rem 0.75rem;
   background-color: var(--jet);
   border-bottom: 1px solid var(--translucent-white-1);
   position: relative;
@@ -213,9 +209,10 @@ button {
 }
 
 button:hover {
-  color: var(--flame);
-  border-color: var(--flame);
+  color: var(--platinum);
+  border-color: var(--turquoise);
   text-shadow: 0 0 0.5px currentColor;
   box-shadow: 0 0 3px rgba(255, 89, 36, 0.2);
 }
+
 </style>

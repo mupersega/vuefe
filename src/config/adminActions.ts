@@ -1,5 +1,5 @@
 import { db, debugQB } from '@/services/db';
-import apiService from '@/services/ApiService';
+import apiService from '../services/apiService'; '@/services/ApiService';
 
 /**
  * Administrative actions for the EVE application
@@ -31,7 +31,7 @@ export const testInvTypesApi = async (searchString?: string): Promise<void> => {
         console.log(`Testing API Service function: ${functionName}`);
         console.log(`Underlying API endpoint: ${endpoint}`);
         const startTime = performance.now();
-        const results = await apiService.getInvTypes(searchString);
+        const results = await apiService.getInvTypes();
         const duration = Math.round(performance.now() - startTime);
         
         // Analyze the first item to determine structure
@@ -46,7 +46,8 @@ export const testInvTypesApi = async (searchString?: string): Promise<void> => {
         console.table(results.slice(0, 3));
         
         return Promise.resolve();
-    } catch (error: any) {        console.error('%cAPI Service Test Failed: getInvTypes()', 'color: #F44336; font-weight: bold;');
+    } catch (error: any) {
+        console.error('%cAPI Service Test Failed: getInvTypes()', 'color: #F44336; font-weight: bold;');
         console.error(`Service Function: apiService.getInvTypes(${searchString ? `"${searchString}"` : ''})`);
         console.error(`Underlying Endpoint: ${endpoint}`);
         console.error(`Error:`, error);

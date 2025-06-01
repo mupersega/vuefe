@@ -9,6 +9,7 @@
 }
 
 :root {
+  /* Core Colors */
   --white: #ffffffff;
   --platinum: #e1e0dcff;
   --silver: #b0ada7ff;
@@ -17,8 +18,13 @@
   --eerie-black: #201f1dff;
   --mid-night: color-mix(in srgb, var(--eerie-black) 50%, var(--night) 50%);
   --night: #0b0a0aff;
+  
+  /* Accent Colors */
   --flame: #eb5e28ff;
   --burnt-sienna: #ed6d3cff;
+  --turquoise: #40e0d0;
+  --turquoise-glow: rgba(64, 224, 208, 0.15);
+  --turquoise-bg: rgba(64, 224, 208, 0.05);
 
   --translucent-white-02: hsla(0, 0%, 100%, 0.02);
   --translucent-white-03: #ffffff08;

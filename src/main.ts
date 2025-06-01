@@ -3,18 +3,19 @@ import { registerPinia } from './stores/registerPinia'
 import { registerIcons } from './config/icons'
 import { registerRouter } from './config/router'
 
-import './style.css'
-import './services/ApiService'
+import './services/apiService'
 
 import App from './App.vue'
-import { loadStores } from './stores'
 
 const app = createApp(App)
 
 registerIcons(app)
 registerPinia(app)
 registerRouter(app)
+registerTippy(app)
 
-loadStores()
+import './style.css'
 
 app.mount('#app')
+import './config/tooltips'
+import { registerTippy } from './config/tooltips'
