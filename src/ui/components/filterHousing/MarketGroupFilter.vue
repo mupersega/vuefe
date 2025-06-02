@@ -3,17 +3,15 @@
     <div class="node-header" @click="toggleExpanded">
       <div class="header-text">
         <span v-if="hasChildren" class="toggle" @click.stop="toggleExpanded">
-          <font-awesome-icon 
-            :icon="['fas', 'chevron-right']"
-            :class="{ expanded: expanded }"
-          />
+          <font-awesome-icon :icon="['fas', 'chevron-right']" :class="{ expanded: expanded }" />
         </span>
         <span v-else class="toggle-placeholder"></span>
         <span>{{ baseNode.marketGroupName }}</span>
       </div>
       <div class="header-actions">
-        <button @click.stop="includeThis" v-tippy="'Include this group'">
-          <font-awesome-icon :icon="['fas', 'plus']"/>
+        <button @click.stop="includeThis" v-tippy="'Include this group'"
+          :class="{ selected: mainStateStore.isGroupSelected(baseNode.marketGroupId!) }">
+          <font-awesome-icon :icon="['fas', 'plus']" />
         </button>
         <button v-if="hasChildren" @click.stop="includeAll" v-tippy="'Include all child groups'">
           <font-awesome-icon :icon="['fas', 'list-check']" />
@@ -21,20 +19,15 @@
       </div>
     </div>
     <div v-if="hasChildren" class="children" :style="{ maxHeight: expanded ? '1000px' : '0px' }">
-      <MarketGroupFilter
-        v-for="child in baseNode.children"
-        :key="child.marketGroupId"
-        :baseNode="child"
-        @include-this="forwardIncludeThis"
-        @include-all="forwardIncludeAll"
-      />
+      <MarketGroupFilter v-for="child in baseNode.children" :key="child.marketGroupId" :baseNode="child" />
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, type PropType } from 'vue';
+import { defineComponent, type PropType } from 'vue';
 import type { MarketGroupNodeDto } from '../../../api-client';
+import { useMainState } from '@/stores/useMainStateStore';
 
 export default defineComponent({
   name: 'MarketGroupFilter',
@@ -47,44 +40,30 @@ export default defineComponent({
       required: true
     }
   },
-  setup(props, { emit }) {
-    const expanded = ref(false);
-    const hasChildren = props.baseNode.children && props.baseNode.children.length > 0;
-
-    function toggleExpanded() {
-      expanded.value = !expanded.value;
-    }
-    function expand() {
-      expanded.value = true;
-    }
-    function collapse() {
-      expanded.value = false;
-    }
-    function includeThis() {
-      emit('include-this', props.baseNode);
-    }
-    function includeAll() {
-      emit('include-all', props.baseNode);
-    }
-    function forwardIncludeThis(node: MarketGroupNodeDto) {
-      emit('include-this', node);
-    }
-    function forwardIncludeAll(node: MarketGroupNodeDto) {
-      emit('include-all', node);
-    }
-
+  data(): { expanded: boolean } {
     return {
-      expanded,
-      hasChildren,
-      toggleExpanded,
-      includeThis,
-      includeAll,
-      forwardIncludeThis,
-      forwardIncludeAll,
-      expand,
-      collapse
+      expanded: false
     };
   },
+  computed: {
+    hasChildren(): boolean {
+      return Boolean(this.baseNode.children && this.baseNode.children.length > 0);
+    },
+    mainStateStore() {
+      return useMainState();
+    }
+  },
+  methods: {
+    toggleExpanded() {
+      this.expanded = !this.expanded;
+    },
+    includeThis() {
+      this.mainStateStore.toggleMarketGroupSelection(this.baseNode.marketGroupId!);
+    },
+    includeAll() {
+      this.$emit('include-all', this.baseNode);
+    },
+  }
 });
 </script>
 
@@ -193,7 +172,8 @@ export default defineComponent({
 
 .children {
   overflow: hidden;
-  max-height: 1000px; /* Set a reasonable max height */
+  max-height: 1000px;
+  /* Set a reasonable max height */
   transition: max-height 0.3s cubic-bezier(0.68, 0, 0.265, 1.2);
 }
 
@@ -215,4 +195,11 @@ button:hover {
   box-shadow: 0 0 3px rgba(255, 89, 36, 0.2);
 }
 
+button.selected {
+  background-color: var(--flame);
+  color: var(--eerie-black);
+  border-color: var(--flame);
+  font-weight: bold;
+  box-shadow: 0 0 3px rgba(255, 89, 36, 0.5);
+}
 </style>
