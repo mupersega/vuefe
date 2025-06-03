@@ -5,14 +5,23 @@
             <font-awesome-icon :icon="['fas', 'filter']" />
         </span>
         <span class="text">Group Filters</span>
-    </button> -->
-        <div class="filter-selection-container">
-            <select class="filter-select" name="filterOptions" id="" @change="setBaseNode">
-                <option value="0" disabled selected>Select a market group</option>
-                <option v-for="group in marketGroupOptions" :value="group.marketGroupId" :key="group.marketGroupId">
-                    {{ group.marketGroupName }}
-                </option>
-            </select>
+    </button> -->        <div class="filter-selection-container">
+            <div class="filter-controls">
+                <select class="filter-select" name="filterOptions" id="" @change="setBaseNode">
+                    <option value="0" disabled selected>Select a market group</option>
+                    <option v-for="group in marketGroupOptions" :value="group.marketGroupId" :key="group.marketGroupId">
+                        {{ group.marketGroupName }}
+                    </option>
+                </select>
+                <div class="tree-controls">
+                    <button @click="expandAll" title="Expand all groups">
+                        <font-awesome-icon :icon="['fas', 'angles-down']" />
+                    </button>
+                    <button @click="collapseAll" title="Collapse all groups">
+                        <font-awesome-icon :icon="['fas', 'angles-right']" />
+                    </button>
+                </div>
+            </div>
             <div class="all-filters">
                 <MarketGroupFilter v-if="baseNode" :baseNode="baseNode"/>
             </div>
@@ -22,14 +31,14 @@
 <script lang="ts">
 import { type MarketGroupNodeDto } from '@/api-client';
 import { useGroupTree } from '@/stores/useGroupTreeStore';
+import { useMainState } from '@/stores/useMainStateStore';
 import MarketGroupFilter from './MarketGroupFilter.vue';
 
 export default {
     name: 'FilterHousing',
     components: {
         MarketGroupFilter
-    },
-    methods: {
+    },    methods: {
         /**
          * Handle selection from the market group dropdown
          * @param event - The change event from the select element
@@ -43,6 +52,22 @@ export default {
             } else {
                 console.warn('No market group found for selected value:', selectedValue);
             }
+        },
+        
+        /**
+         * Trigger global expand all event
+         */
+        expandAll() {
+            const mainState = useMainState();
+            mainState.triggerExpandAll();
+        },
+        
+        /**
+         * Trigger global collapse all event
+         */
+        collapseAll() {
+            const mainState = useMainState();
+            mainState.triggerCollapseAll();
         },
     },
     data() {
@@ -148,6 +173,34 @@ export default {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     gap: 1rem;
     border-left: 1px solid var(--translucent-white-3);
+}
+
+.filter-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem;
+    gap: 0.5rem;
+}
+
+.tree-controls {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.tree-controls button {
+    background-color: var(--eerie-black);
+    color: var(--gray);
+    border: 1px solid var(--translucent-white-1);
+    border-radius: 0.3rem;
+    padding: 0.3rem 0.5rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.tree-controls button:hover {
+    color: var(--flame);
+    border-color: var(--flame);
 }
 
 .all-filters {

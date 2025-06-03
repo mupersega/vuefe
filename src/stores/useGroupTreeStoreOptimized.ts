@@ -1,4 +1,3 @@
-// stores/useGroupTreeStore.ts
 import { defineStore } from 'pinia'
 import apiService from '@/services/apiService'
 import type { MarketGroupNodeDto } from '@api-client/models/market-group-node-dto'
@@ -30,7 +29,8 @@ const useGroupTreeStore = defineStore('groupTree', {
         }
     },
 
-    getters: {        getGroupById: (state) => {
+    getters: {
+        getGroupById: (state) => {
             // Use memoization for better performance with repeated calls
             const cache = new Map<number, MarketGroupNodeDto | null>();
             
@@ -56,7 +56,9 @@ const useGroupTreeStore = defineStore('groupTree', {
                 cache.set(id, null);
                 return null;
             };
-        },        getGroupsByIds: (state) => {
+        },
+        
+        getGroupsByIds: (state) => {
             // Using a cache for multiple calls with the same IDs
             const cache = new Map<string, MarketGroupNodeDto[]>();
             
@@ -67,14 +69,6 @@ const useGroupTreeStore = defineStore('groupTree', {
                 const cacheKey = [...ids].sort().join(',');
                 if (cache.has(cacheKey)) {
                     return [...cache.get(cacheKey)!]; // Return a copy to prevent mutation
-                }
-                
-                // Handle single ID as a special case for better performance
-                if (ids.length === 1) {
-                    const group = state.getGroupById(ids[0]);
-                    const result = group ? [group] : [];
-                    cache.set(cacheKey, result);
-                    return [...result];
                 }
                 
                 // Use a more efficient BFS approach for multiple IDs
@@ -90,6 +84,11 @@ const useGroupTreeStore = defineStore('groupTree', {
                     if (node.marketGroupId !== undefined && remainingIds.has(node.marketGroupId)) {
                         result.push(node);
                         remainingIds.delete(node.marketGroupId);
+                        
+                        // Stop traversing completely if we've found all IDs
+                        if (remainingIds.size === 0) {
+                            break;
+                        }
                     }
                     
                     // Only add children if we still have IDs to find
@@ -101,17 +100,27 @@ const useGroupTreeStore = defineStore('groupTree', {
                 cache.set(cacheKey, result);
                 return result;
             };
-        },        getParentOf: (state) => {
+        },
+        
+        getParentOf: (state) => {
             const cache = new Map<number, MarketGroupNodeDto | null>();
             
             return (id: number): MarketGroupNodeDto | null => {
+                // Return from cache if available
                 if (cache.has(id)) {
-                    return cache.get(id);
+                    return cache.get(id)!;
                 }
                 
                 // BFS approach with parent tracking
-                const queue: Array<{node: MarketGroupNodeDto, parent: MarketGroupNodeDto | null}> = 
-                    state.tree.map(node => ({node, parent: null}));
+                interface QueueItem {
+                    node: MarketGroupNodeDto;
+                    parent: MarketGroupNodeDto | null;
+                }
+                
+                const queue: QueueItem[] = state.tree.map(node => ({
+                    node,
+                    parent: null
+                }));
                 
                 while (queue.length > 0) {
                     const {node, parent} = queue.shift()!;
@@ -122,39 +131,49 @@ const useGroupTreeStore = defineStore('groupTree', {
                     }
                     
                     if (node.children?.length) {
-                        queue.push(
-                            ...node.children.map(child => ({node: child, parent: node}))
-                        );
+                        queue.push(...node.children.map(child => ({
+                            node: child,
+                            parent: node
+                        })));
                     }
                 }
                 
                 cache.set(id, null);
                 return null;
             };
-        },        getChildrenOf: (state) => {
-            // Use memoization for better performance with repeated calls
-            const childrenCache = new Map<number, MarketGroupNodeDto[]>();
+        },
+        
+        getChildrenOf: (state) => {
+            const cache = new Map<number, MarketGroupNodeDto[]>();
             
             return (id: number): MarketGroupNodeDto[] => {
                 // Return from cache if available
-                if (childrenCache.has(id)) {
-                    return [...childrenCache.get(id)!]; // Return a copy to prevent mutation
+                if (cache.has(id)) {
+                    return [...cache.get(id)!]; // Return a copy to prevent mutation
                 }
                 
-                // Leverage the existing getGroupById method for faster lookup
-                const group = state.getGroupById(id);
-                if (!group) {
-                    childrenCache.set(id, []);
-                    return [];
+                // Find node using BFS (faster than recursion for large trees)
+                const queue = [...state.tree];
+                while (queue.length > 0) {
+                    const node = queue.shift()!;
+                    
+                    if (node.marketGroupId === id) {
+                        const children = node.children || [];
+                        cache.set(id, children);
+                        return [...children]; // Return a copy to prevent mutation
+                    }
+                    
+                    if (node.children?.length) {
+                        queue.push(...node.children);
+                    }
                 }
                 
-                // Store children in cache and return them
-                const children = group.children || [];
-                childrenCache.set(id, children);
-                return [...children]; // Return a copy to prevent mutation
+                cache.set(id, []);
+                return [];
             };
         },
-          getAllChildrenIDsOf: (state) => {
+        
+        getAllChildrenIDsOf: (state) => {
             const cache = new Map<number, number[]>();
             
             return (id: number): number[] => {
@@ -165,9 +184,9 @@ const useGroupTreeStore = defineStore('groupTree', {
                 
                 // First find the node with the given ID (use BFS for efficiency)
                 let targetNode: MarketGroupNodeDto | null = null;
-                const nodeQueue: MarketGroupNodeDto[] = [...state.tree];
+                const nodeQueue = [...state.tree];
                 
-                while (nodeQueue.length > 0 && targetNode === null) {
+                while (nodeQueue.length > 0) {
                     const node = nodeQueue.shift()!;
                     if (node.marketGroupId === id) {
                         targetNode = node;
@@ -186,7 +205,7 @@ const useGroupTreeStore = defineStore('groupTree', {
                 
                 // Collect all child IDs using BFS (more efficient than recursion)
                 const childIds: number[] = [];
-                const queue: MarketGroupNodeDto[] = [...targetNode.children];
+                const queue = [...targetNode.children];
                 
                 while (queue.length > 0) {
                     const node = queue.shift()!;
@@ -204,24 +223,32 @@ const useGroupTreeStore = defineStore('groupTree', {
             };
         }
     }
-})
+});
+
+// Create a singleton instance that will be used across the app
+let treeStoreInstance: ReturnType<typeof useGroupTreeStore> | null = null;
 
 export function useGroupTree() {
-    const groupTreeStore = useGroupTreeStore()
-    // Automatically load the tree when the store is first used
-    if (!groupTreeStore.loaded && !groupTreeStore.loading) {
-        groupTreeStore.loadTree()
+    // Create the store instance if it doesn't exist yet
+    if (!treeStoreInstance) {
+        treeStoreInstance = useGroupTreeStore();
+        
+        // Automatically load the tree when the store is first used
+        if (!treeStoreInstance.loaded && !treeStoreInstance.loading) {
+            treeStoreInstance.loadTree();
+        }
     }
+    
     return {
-        tree: groupTreeStore.tree,
-        loading: groupTreeStore.loading,
-        loaded: groupTreeStore.loaded,
-        loadTree: groupTreeStore.loadTree,
-        setup: groupTreeStore.setup,
-        getGroupById: groupTreeStore.getGroupById,
-        getGroupsByIds: groupTreeStore.getGroupsByIds,
-        getParentOf: groupTreeStore.getParentOf,
-        getChildrenOf: groupTreeStore.getChildrenOf,
-        getAllChildrenIDsOf: groupTreeStore.getAllChildrenIDsOf
-    }
+        tree: treeStoreInstance.tree,
+        loading: treeStoreInstance.loading,
+        loaded: treeStoreInstance.loaded,
+        loadTree: treeStoreInstance.loadTree,
+        setup: treeStoreInstance.setup,
+        getGroupById: treeStoreInstance.getGroupById,
+        getGroupsByIds: treeStoreInstance.getGroupsByIds,
+        getParentOf: treeStoreInstance.getParentOf,
+        getChildrenOf: treeStoreInstance.getChildrenOf,
+        getAllChildrenIDsOf: treeStoreInstance.getAllChildrenIDsOf
+    };
 }

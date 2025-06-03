@@ -20,7 +20,10 @@ import {
     faPlus,
     faListCheck,
     faChevronRight,
-    faFilter
+    faFilter,
+    faAnglesDown,
+    faAnglesRight,
+    faCog
 } from '@fortawesome/free-solid-svg-icons'
 
 const icons = [
@@ -42,7 +45,10 @@ const icons = [
     faPlus,
     faListCheck,
     faChevronRight,
-    faFilter
+    faFilter,
+    faAnglesDown,
+    faAnglesRight,
+    faCog
 ]
 
 library.add(...icons)
