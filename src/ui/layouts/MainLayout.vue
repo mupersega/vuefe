@@ -1,19 +1,28 @@
 <template>
     <div class="app-container">
-        <Sidebar v-if="layoutStore.isSidebarOpen" />
-        <main :class="{ 'drawer-open': layoutStore.isRightDrawerOpen }">
+        <Sidebar v-if="layoutStore.sidebar" />
+        <main :class="{ 
+            'drawer-open': layoutStore.leftDrawer,
+            'top-drawer-open': layoutStore.topDrawer 
+        }">
             <LayoutControls />
             <Transition name="drawer">
-                <div class="left-drawer" v-show="layoutStore.isRightDrawerOpen">
-                    <div class="drawer-accent" :class="{'new': layoutStore.isRightDrawerOpen}"></div>
+                <div class="left-drawer" v-show="layoutStore.leftDrawer">
+                    <div class="drawer-accent" :class="{'new': layoutStore.leftDrawer}"></div>
                     <FilterHousing/>
                 </div>
             </Transition>
-            <div class="top-bar" v-if="layoutStore.isSearchControlsOpen">
-                <SearchControls />
-            </div>
-            <div class="page-content">
-                <slot></slot>
+            <div class="main-right">
+                <Transition name="top-drawer">
+                    <div class="top-drawer" v-show="layoutStore.topDrawer">
+                        <div class="drawer-accent-top" :class="{'new': layoutStore.topDrawer}"></div>
+                        <SearchControls />
+                        <Staging />
+                    </div>
+                </Transition>
+                <div class="page-content" :class="{ 'has-top-drawer': layoutStore.topDrawer }">
+                    <slot></slot>
+                </div>
             </div>
         </main>
     </div>
@@ -25,6 +34,7 @@ import Sidebar from '@components/Sidebar/Sidebar.vue';
 import SearchControls from '@components/SearchControls/SearchControls.vue';
 import FilterHousing from '@components/FilterHousing/FilterHousing.vue';
 import LayoutControls from '@components/LayoutControls/LayoutControls.vue';
+import Staging from '../components/Staging/Staging.vue';
 
 import { useLayout } from '@stores/index';
 
@@ -34,26 +44,8 @@ export default defineComponent({
         Sidebar,
         SearchControls,
         FilterHousing,
-        LayoutControls
-    },
-    props: {
-        showSearchControls: {
-            type: Boolean,
-            default: false
-        },
-        showDrawer: {
-            type: Boolean,
-            default: false
-        },
-        drawerOpen: {
-            type: Boolean,
-            default: false
-        }
-    },
-    data() {
-        return {
-            drawerOpen: false,
-        };
+        LayoutControls,
+        Staging,
     },
     computed: {
         layoutStore() {
@@ -81,10 +73,14 @@ export default defineComponent({
     position: relative; /* Ensure z-index applies correctly */
 }
 
-.top-bar {
-    grid-area: top-bar;
+.main-right {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    flex: 1;
+    /* Position context for absolute positioned elements */
+    position: relative;
 }
 
 .sidebar {
@@ -123,8 +119,8 @@ main {
 .left-drawer {
     display: flex;
     background-color: var(--jet);
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-    z-index: 10;
+    box-shadow: 0 0 3px 1px var(--night);
+    z-index: 11;
     width: 300px;
     overflow: visible;
     will-change: transform, opacity;
@@ -141,13 +137,8 @@ main {
     width: 2px;
     height: 100%;
     background-color: var(--flame);
-    z-index: 11;
-    transition: opacity 0.5s 0.2s cubic-bezier(0.25, 1.5, 0.5, 1);
+    z-index: 11;    transition: opacity 0.5s 0.2s cubic-bezier(0.25, 1.5, 0.5, 1);
     opacity: 1;
-
-    @starting-style {
-        opacity: 0;
-    }
 }
 
 /* Vue transition classes for the drawer */
@@ -159,7 +150,7 @@ main {
 
 .drawer-enter-from,
 .drawer-leave-to {
-    transform: translateX(-100%);
+    transform: translateX(-105%);
 }
 
 .drawer-enter-to,
@@ -168,25 +159,78 @@ main {
 }
 
 .page-content {
+    margin-left: 0;
+}
+
+/* Apply styles when drawer is open */
+main.drawer-open .main-right {
+    margin-left: 300px;
+}
+
+/* Apply styles when drawer is open */
+.main-right {
+    transition: margin-left 0.3s cubic-bezier(0.25, 1.1, 0.5, 1), margin-top 0.3s cubic-bezier(0.25, 1.1, 0.5, 1);
+    will-change: margin-left, margin-top;
+}
+
+/* Top drawer styles */
+.top-drawer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background-color: var(--jet);
+    box-shadow: 0 0 3px 1px var(--night);
+    overflow: visible;
+    height: var(--top-drawer-height);
+    width: 100%;
+}
+
+.drawer-accent-top {
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    width: 100%;
+    height: 1px;
+    background-color: var(--flame);
+    z-index: 11;
+    opacity: 1;
+}
+
+.top-drawer-enter-active,
+.top-drawer-leave-active {
+    transition: transform 0.3s cubic-bezier(0.25, 1.1, 0.5, 1);
+    pointer-events: none; /* Prevent interaction during animation */
+}
+
+.top-drawer-enter-from,
+.top-drawer-leave-to {
+    transform: translateY(-105%);
+}
+
+.top-drawer-enter-to,
+.top-drawer-leave-from {
+    transform: translateY(0);
+}
+
+/* The page content is placed directly in the flow after the top bar */
+.page-content {
+    position: relative;
+    flex: 1;
     display: flex;
     overflow-y: scroll;
     height: 100%;
     align-items: center;
     justify-content: center;
-    flex: 1;
-    transition: margin-left 0.3s cubic-bezier(0.68, 0, 0.265, 1.2);
-    margin-left: 0;
+    margin-top: 0;
+    transition: margin-top 0.3s cubic-bezier(0.25, 1.1, 0.5, 1);
+    will-change: margin-top;
 }
 
-/* Apply styles when drawer is open */
-main.drawer-open .page-content {
-    margin-left: 300px;
+.page-content.has-top-drawer {
+    margin-top: var(--top-drawer-height);
 }
-
-/* Ensure content adjusts during transitions */
-main.drawer-open .drawer-enter-active ~ .page-content,
-main .drawer-leave-active ~ .page-content {
-    transition: margin-left 0.2s ease-in-out;
-}
-
 </style>

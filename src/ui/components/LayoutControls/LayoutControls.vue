@@ -2,11 +2,20 @@
     <div class="layout-controls">
         <button 
             class="control-button" 
-            :class="{ 'selected': layoutStore.isRightDrawerOpen }" 
-            @click="toggleDrawer"
+            :class="{ 'selected': layoutStore.leftDrawer }" 
+            @click="layoutStore.toggleLeftDrawer()"
         >
             <div class="button-content">
                 <font-awesome-icon :icon="['fas', 'filter']" />
+            </div>
+        </button>
+        <button 
+            class="control-button" 
+            :class="{ 'selected': layoutStore.topDrawer }" 
+            @click="layoutStore.toggleTopDrawer()"
+        >
+            <div class="button-content">
+                <font-awesome-icon :icon="['fas', 'search']" />
             </div>
         </button>
         <button class="control-button">
@@ -22,26 +31,18 @@ import { defineComponent } from 'vue';
 
 export default defineComponent({
     name: 'LayoutControls',
-    
-
     computed: {
         layoutStore() {
             return useLayoutStore();
         }
     },
-    
-    methods: {
-        toggleDrawer() {
-            this.layoutStore.toggleRightDrawer();
-        }
-    }
 });
 </script>
 <style scoped>
 .layout-controls {
     position: fixed;
-    top: 0.75rem;
-    right: 0.75rem;
+    top: 0.5rem;
+    right: 0.5rem;
     z-index: 1000;
     display: flex;
     gap: 0.35rem;
@@ -55,7 +56,8 @@ export default defineComponent({
     mix-blend-mode: plus-lighter;
 }
 
-.control-button {    color: var(--platinum);
+.control-button {
+    color: var(--platinum);
     background-color: var(--jet);
     border: 1px solid var(--translucent-white-3);
     border-radius: 0.35rem;

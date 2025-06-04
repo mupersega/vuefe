@@ -17,3 +17,13 @@
         opacity: 0;
     }
 }
+
+/* Classes for v-img-loaded directive */
+.img-loading {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.img-loaded {
+  opacity: 1;
+}

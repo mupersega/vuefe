@@ -225,6 +225,7 @@ defineExpose({
 .me-combobox {
   position: relative;
   width: 100%;
+  max-width: 400px; /* Adjust as needed */
 }
 
 .combobox-container {

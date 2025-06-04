@@ -1,3 +1,28 @@
+
+<template>
+    <div class="search-controls-wrapper">
+        <!-- <div class="filter-options">
+            <MeSwitch
+                v-model="bpMode"
+                left-label="bp"
+                right-label="item"/>
+        </div> -->
+
+        <MeCombobox
+            class="search-input-container" 
+            v-if="typeCombobox"
+            v-model="typeCombobox.state.searchQuery"
+            :items="typeCombobox.state.items" 
+            :labelField="typeCombobox.fields.label" 
+            :valueField="typeCombobox.fields.value"
+            placeholder="Type to search Items..." 
+            @select="typeCombobox.handleSelect" 
+            @input="typeCombobox.handleInput"
+            :showSearchMode="true" 
+            :isStartsWith="typeCombobox.isStartsWith.value"
+            @update:isStartsWith="(value) => typeCombobox.isStartsWith.value = value"/>
+    </div>
+</template>
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { searchStartsWith, searchContains, db } from '@services/db';
@@ -82,31 +107,6 @@ export default defineComponent({
 });
 </script>
 
-<template>
-    <div class="search-controls-wrapper">
-        <div class="filter-options">
-            <MeSwitch
-                v-model="bpMode"
-                left-label="bp"
-                right-label="item"/>
-        </div>
-
-        <MeCombobox
-            class="search-input-container" 
-            v-if="typeCombobox"
-            v-model="typeCombobox.state.searchQuery"
-            :items="typeCombobox.state.items" 
-            :labelField="typeCombobox.fields.label" 
-            :valueField="typeCombobox.fields.value"
-            placeholder="Type to search Items..." 
-            @select="typeCombobox.handleSelect" 
-            @input="typeCombobox.handleInput"
-            :showSearchMode="true" 
-            :isStartsWith="typeCombobox.isStartsWith.value"
-            @update:isStartsWith="(value) => typeCombobox.isStartsWith.value = value"/>
-    </div>
-</template>
-
 <style scoped>
 .search-controls-wrapper {
     display: flex;
@@ -115,9 +115,7 @@ export default defineComponent({
     padding: 1rem;
     background-color: var(--jet);
     box-shadow: 1px 1px 3px var(--night);
-    border-radius: 0.5rem;
-    border: 1px solid var(--translucent-white-3);
-    margin: 1rem;
+    border-bottom: 1px solid var(--translucent-white-3);
     transform: translateY(0px);
     transition: transform 0.3s ease-in-out;
     z-index: 2;

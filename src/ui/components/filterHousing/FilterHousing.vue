@@ -1,32 +1,25 @@
 <template>
-    <!-- <div class="filter-housing"> -->
-        <!-- <button class="filter-button" popovertarget="filterPopover">
-        <span class="icon">
-            <font-awesome-icon :icon="['fas', 'filter']" />
-        </span>
-        <span class="text">Group Filters</span>
-    </button> -->        <div class="filter-selection-container">
-            <div class="filter-controls">
-                <select class="filter-select" name="filterOptions" id="" @change="setBaseNode">
-                    <option value="0" disabled selected>Select a market group</option>
-                    <option v-for="group in marketGroupOptions" :value="group.marketGroupId" :key="group.marketGroupId">
-                        {{ group.marketGroupName }}
-                    </option>
-                </select>
-                <div class="tree-controls">
-                    <button @click="expandAll" title="Expand all groups">
-                        <font-awesome-icon :icon="['fas', 'angles-down']" />
-                    </button>
-                    <button @click="collapseAll" title="Collapse all groups">
-                        <font-awesome-icon :icon="['fas', 'angles-right']" />
-                    </button>
-                </div>
-            </div>
-            <div class="all-filters">
-                <MarketGroupFilter v-if="baseNode" :baseNode="baseNode"/>
+    <div class="filter-selection-container">
+        <div class="filter-controls">
+            <select class="filter-select" name="filterOptions" id="" @change="setBaseNode">
+                <option value="0" disabled selected>Select a market group</option>
+                <option v-for="group in marketGroupOptions" :value="group.marketGroupId" :key="group.marketGroupId">
+                    {{ group.marketGroupName }}
+                </option>
+            </select>
+            <div class="tree-controls">
+                <button @click="expandAll" title="Expand all groups">
+                    <font-awesome-icon :icon="['fas', 'angles-down']" />
+                </button>
+                <button @click="collapseAll" title="Collapse all groups">
+                    <font-awesome-icon :icon="['fas', 'angles-right']" />
+                </button>
             </div>
         </div>
-    <!-- </div> -->
+        <div class="all-filters">
+            <MarketGroupFilter v-if="baseNode" :baseNode="baseNode" />
+        </div>
+    </div>
 </template>
 <script lang="ts">
 import { type MarketGroupNodeDto } from '@/api-client';
@@ -38,7 +31,7 @@ export default {
     name: 'FilterHousing',
     components: {
         MarketGroupFilter
-    },    methods: {
+    }, methods: {
         /**
          * Handle selection from the market group dropdown
          * @param event - The change event from the select element
@@ -53,7 +46,7 @@ export default {
                 console.warn('No market group found for selected value:', selectedValue);
             }
         },
-        
+
         /**
          * Trigger global expand all event
          */
@@ -61,7 +54,7 @@ export default {
             const mainState = useMainState();
             mainState.triggerExpandAll();
         },
-        
+
         /**
          * Trigger global collapse all event
          */
@@ -92,7 +85,7 @@ export default {
     flex-direction: column;
     gap: 0.5rem;
     background-color: var(--jet);
-    box-shadow: 1px 1px 3px var(--night);
+    box-shadow: 0 0 3px 1px var(--night);
     border-radius: 0.5rem;
     border: 1px solid var(--translucent-white-3);
     margin: 1rem;
@@ -170,7 +163,6 @@ export default {
     top: 0;
     height: 100%;
     background-color: var(--jet);
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     gap: 1rem;
     border-left: 1px solid var(--translucent-white-3);
 }

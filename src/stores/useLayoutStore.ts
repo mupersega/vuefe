@@ -2,32 +2,28 @@ import { defineStore } from "pinia";
 
 export const useLayoutStore = defineStore("layout", {
   state: () => ({
-    isSearchControlsOpen: false,
-    isRightDrawerOpen: true,
-    isSidebarOpen: true,
-    isMobile: false,
+    topDrawer: true,
+    leftDrawer: true,
+    sidebar: true,
   }),
   actions: {
-    toggleRightDrawer() {
-      this.isRightDrawerOpen = !this.isRightDrawerOpen;
+    toggleLeftDrawer() {
+      this.leftDrawer = !this.leftDrawer;
     },
-    toggleSearchControls() {
-      this.isSearchControlsOpen = !this.isSearchControlsOpen;
-    },
-    setIsMobile(isMobile: boolean) {
-      this.isMobile = isMobile;
+    toggleTopDrawer() {
+      this.topDrawer = !this.topDrawer;
     },
     toggleSidebar() {
-      this.isSidebarOpen = !this.isSidebarOpen;
+      this.sidebar = !this.sidebar;
     },
-    setIsSidebarOpen(isOpen: boolean) {
-      this.isSidebarOpen = isOpen;
+    setSidebar(open: boolean) {
+      this.sidebar = open;
     },
-    setIsSearchControlsOpen(isOpen: boolean) {
-      this.isSearchControlsOpen = isOpen;
+    setTopDrawer(open: boolean) {
+      this.topDrawer = open;
     },
-    setIsRightDrawerOpen(isOpen: boolean) {
-      this.isRightDrawerOpen = isOpen;
+    setLeftDrawer(open: boolean) {
+      this.leftDrawer = open;
     },
   },
 });
@@ -35,13 +31,11 @@ export const useLayoutStore = defineStore("layout", {
 export function useLayout() {
   const layoutStore = useLayoutStore();
   return {
-    isSearchControlsOpen: layoutStore.isSearchControlsOpen,
-    isRightDrawerOpen: layoutStore.isRightDrawerOpen,
-    toggleRightDrawer: layoutStore.toggleRightDrawer,
-    toggleSearchControls: layoutStore.toggleSearchControls,
-    setIsMobile: layoutStore.setIsMobile,
-    isMobile: layoutStore.isMobile,
+    topDrawer: layoutStore.topDrawer,
+    leftDrawer: layoutStore.leftDrawer,
+    sidebar: layoutStore.sidebar,
+    toggleLeftDrawer: layoutStore.toggleLeftDrawer,
+    toggleTopDrawer: layoutStore.toggleTopDrawer,
     toggleSidebar: layoutStore.toggleSidebar,
-    isSidebarOpen: layoutStore.isSidebarOpen,
   };
 }

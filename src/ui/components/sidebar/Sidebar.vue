@@ -1,20 +1,3 @@
-<script setup lang="ts">
-import NavLink, { type NavLinkProps } from './NavLink.vue';
-import { ref } from 'vue';
-
-const navExpanded = ref(false);
-
-const navItems: NavLinkProps[] = [
-  { to: "/", icon: ['fas', 'house'], text: "Home" },
-  { to: "/workshop", icon: ['fas', 'compass-drafting'], text: "Workshop" },
-  { to: "/foundry", icon: ['fas', 'industry'], text: "Foundry" },
-  { to: "/Barracks", icon: ['fas', 'users'], text: "Barracks" },
-  { to: "/archive", icon: ['fas', 'book'], text: "Archive" },
-  // { to: "/sdf", icon: ['fas', 'sliders'], text: "Lookup" },
-  { to: "/bridge", icon: ['fas', 'sliders'], text: "Bridge" },
-  // { to: "/bridge", icon: ['fas', 'shield-cat'], text: "Bridge" },
-];
-</script>
 <template>
   <nav :class="{ expanded: navExpanded }" id="sidebar">
     <div class="actions">
@@ -37,6 +20,23 @@ const navItems: NavLinkProps[] = [
     </div>
   </nav>
 </template>
+<script setup lang="ts">
+import NavLink, { type NavLinkProps } from './NavLink.vue';
+import { ref } from 'vue';
+
+const navExpanded = ref(false);
+
+const navItems: NavLinkProps[] = [
+  { to: "/", icon: ['fas', 'house'], text: "Home" },
+  { to: "/workshop", icon: ['fas', 'compass-drafting'], text: "Workshop" },
+  { to: "/foundry", icon: ['fas', 'industry'], text: "Foundry" },
+  { to: "/Barracks", icon: ['fas', 'users'], text: "Barracks" },
+  { to: "/archive", icon: ['fas', 'book'], text: "Archive" },
+  // { to: "/sdf", icon: ['fas', 'sliders'], text: "Lookup" },
+  { to: "/bridge", icon: ['fas', 'sliders'], text: "Bridge" },
+  // { to: "/bridge", icon: ['fas', 'shield-cat'], text: "Bridge" },
+];
+</script>
 <style scoped>
 nav {
   grid-area: nav;
