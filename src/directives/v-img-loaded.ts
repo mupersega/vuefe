@@ -9,7 +9,7 @@ export default {
     };
 
     if (el.complete && el.naturalHeight !== 0) {
-      onLoad(); // Cached image
+      onLoad();
     } else {
       el.addEventListener('load', onLoad);
     }

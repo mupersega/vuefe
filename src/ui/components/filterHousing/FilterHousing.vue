@@ -3,7 +3,7 @@
         <div class="filter-controls">
             <select class="filter-select" name="filterOptions" id="" @change="setBaseNode">
                 <option value="0" disabled selected>Select a market group</option>
-                <option v-for="group in marketGroupOptions" :value="group.marketGroupId" :key="group.marketGroupId">
+                <option class="filter-option" v-for="group in marketGroupOptions" :value="group.marketGroupId" :key="group.marketGroupId">
                     {{ group.marketGroupName }}
                 </option>
             </select>
@@ -80,45 +80,6 @@ export default {
 };
 </script>
 <style scoped>
-.filter-housing {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    background-color: var(--jet);
-    box-shadow: 0 0 3px 1px var(--night);
-    border-radius: 0.5rem;
-    border: 1px solid var(--translucent-white-3);
-    margin: 1rem;
-    transform: translateY(0px);
-    transition: transform 0.3s cubic-bezier(0.68, 0, 0.265, 1.2);
-    z-index: 2;
-    overflow: hidden;
-}
-
-.filter-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    background-color: var(--eerie-black);
-    color: var(--gray);
-    border: 1px solid var(--translucent-white-3);
-    border-radius: 0.3rem;
-    padding: 0.25rem 0.75rem;
-    font-size: 0.7rem;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.filter-button:hover {
-    color: var(--flame);
-    border-color: var(--flame);
-    text-shadow: 0 0 0.5px currentColor;
-}
-
-.filter-button .icon {
-    font-size: 0.8rem;
-}
 
 .filter-select {
     width: 100%;
@@ -132,7 +93,6 @@ export default {
     font-size: 0.7rem;
     outline: none;
     transition: all 0.15s ease;
-    margin: 0.75rem 0.75rem 0 0.75rem;
     width: calc(100% - 1.5rem);
 }
 
@@ -163,15 +123,29 @@ export default {
     top: 0;
     height: 100%;
     background-color: var(--jet);
-    gap: 1rem;
     border-left: 1px solid var(--translucent-white-3);
+}
+
+.filter-option {
+    background-color: var(--eerie-black);
+    color: var(--silver);
+    padding: 0.5rem;
+    border-radius: 0.3rem;
+    margin: 0.25rem 0;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.filter-option:hover {
+    background-color: var(--flame) !important;
+    color: var(--eerie-black);
 }
 
 .filter-controls {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.5rem;
+    padding: 1rem;
     gap: 0.5rem;
 }
 

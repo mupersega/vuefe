@@ -41,8 +41,8 @@ export default defineComponent({
 <style scoped>
 .layout-controls {
     position: fixed;
-    top: 0.5rem;
-    right: 0.5rem;
+    top: 1rem;
+    right: 1rem;
     z-index: 1000;
     display: flex;
     gap: 0.35rem;

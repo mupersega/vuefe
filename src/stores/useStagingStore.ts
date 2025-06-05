@@ -2,16 +2,20 @@ import type { InvTypeDto } from "@api-client/models/inv-type-dto";
 import { defineStore } from "pinia";
 import { db } from "@services/db";
 import { useMainStateStore } from "./useMainStateStore";
+import { add } from "dexie";
 
 export const useStagingStore = defineStore("staging", {
     state: () => ({
         searchString: "",
         selectedMarketGroupIds: [] as number[],
         stagedItems: [] as InvTypeDto[],
+        selectedStagedItemIds: [] as number[],
         isLoading: false,
         error: null as Error | null,
+        mouseDown: false,
     }),
-    actions: {        addGroup(marketGroupId: number) {
+    actions: {
+        addGroup(marketGroupId: number) {
             if (!this.selectedMarketGroupIds.includes(marketGroupId)) {
                 this.selectedMarketGroupIds = [...this.selectedMarketGroupIds, marketGroupId];
                 this.fetchStagedItems();
@@ -69,7 +73,16 @@ export const useStagingStore = defineStore("staging", {
             } finally {
                 this.isLoading = false;
             }
+        },
+        selectItem(itemId: number) {
+            if (!this.selectedStagedItemIds.includes(itemId)) {
+                this.selectedStagedItemIds.push(itemId);
+            }
+        },
+        deselectItem(itemId: number) {
+            this.selectedStagedItemIds = this.selectedStagedItemIds.filter(id => id !== itemId);
         }
+        
     },
     getters: {
         stagedItemCount: (state) => state.stagedItems.length,
@@ -110,6 +123,7 @@ export function useStagingState() {
         stagedItems: stagingStore.stagedItems,
         isLoading: stagingStore.isLoading,
         error: stagingStore.error,
+
         
         // Actions
         addGroup: stagingStore.addGroup,
