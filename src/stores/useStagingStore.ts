@@ -2,7 +2,6 @@ import type { InvTypeDto } from "@api-client/models/inv-type-dto";
 import { defineStore } from "pinia";
 import { db } from "@services/db";
 import { useMainStateStore } from "./useMainStateStore";
-import { add } from "dexie";
 
 export const useStagingStore = defineStore("staging", {
     state: () => ({
@@ -13,26 +12,30 @@ export const useStagingStore = defineStore("staging", {
         isLoading: false,
         error: null as Error | null,
         mouseDown: false,
+        // New state for drag functionality
+        isDragging: false,
+        dragStartPosition: { x: 0, y: 0 },
     }),
-    actions: {
-        addGroup(marketGroupId: number) {
+    actions: {        addGroup(marketGroupId: number) {
             if (!this.selectedMarketGroupIds.includes(marketGroupId)) {
                 this.selectedMarketGroupIds = [...this.selectedMarketGroupIds, marketGroupId];
+                this.clearSelection(); // Clear item selection when groups change
                 this.fetchStagedItems();
             }
         },
         removeGroup(marketGroupId: number) {
             if (this.selectedMarketGroupIds.includes(marketGroupId)) {
                 this.selectedMarketGroupIds = this.selectedMarketGroupIds.filter(id => id !== marketGroupId);
+                this.clearSelection(); // Clear item selection when groups change
                 this.fetchStagedItems();
             }
-        },
-        addMultipleGroups(marketGroupIds: number[]) {
+        },        addMultipleGroups(marketGroupIds: number[]) {
             const newSelectedGroups = [...this.selectedMarketGroupIds];
             const uniqueNewIds = marketGroupIds.filter(id => !newSelectedGroups.includes(id));
             
             if (uniqueNewIds.length > 0) {
                 this.selectedMarketGroupIds = [...newSelectedGroups, ...uniqueNewIds];
+                this.clearSelection(); // Clear item selection when groups change
                 this.fetchStagedItems();
             }
         },
@@ -43,16 +46,19 @@ export const useStagingStore = defineStore("staging", {
             );
             
             if (originalLength !== this.selectedMarketGroupIds.length) {
+                this.clearSelection(); // Clear item selection when groups change
                 this.fetchStagedItems();
             }
         },
         setGroups(marketGroupIds: number[]) {
             this.selectedMarketGroupIds = [...marketGroupIds];
+            this.clearSelection(); // Clear item selection when groups change
             this.fetchStagedItems();
         },
         syncWithMainState() {
             const mainStore = useMainStateStore();
             this.selectedMarketGroupIds = [...mainStore.selectedMarketGroups];
+            this.clearSelection(); // Clear item selection when syncing with main state
             this.fetchStagedItems();
         },
         async fetchStagedItems() {
@@ -74,6 +80,8 @@ export const useStagingStore = defineStore("staging", {
                 this.isLoading = false;
             }
         },
+
+        // Enhanced selection methods
         selectItem(itemId: number) {
             if (!this.selectedStagedItemIds.includes(itemId)) {
                 this.selectedStagedItemIds.push(itemId);
@@ -81,11 +89,55 @@ export const useStagingStore = defineStore("staging", {
         },
         deselectItem(itemId: number) {
             this.selectedStagedItemIds = this.selectedStagedItemIds.filter(id => id !== itemId);
+        },
+        toggleItemSelection(itemId: number) {
+            if (this.selectedStagedItemIds.includes(itemId)) {
+                this.deselectItem(itemId);
+            } else {
+                this.selectItem(itemId);
+            }
+        },
+        clearSelection() {
+            console.log("Clearing selection");
+            this.selectedStagedItemIds = [];
+        },
+        selectSingleItem(itemId: number) {
+            this.selectedStagedItemIds = [itemId];
+        },
+        selectMultipleItems(itemIds: number[]) {
+            // Add to existing selection
+            const newSelections = itemIds.filter(id => !this.selectedStagedItemIds.includes(id));
+            this.selectedStagedItemIds = [...this.selectedStagedItemIds, ...newSelections];
+        },
+        isItemSelected(itemId: number): boolean {
+            return this.selectedStagedItemIds.includes(itemId);
+        },
+
+        // Drag state management
+        startDrag(position: { x: number, y: number }) {
+            this.isDragging = true;
+            this.dragStartPosition = position;
+        },
+        endDrag() {
+            this.isDragging = false;
+            this.dragStartPosition = { x: 0, y: 0 };
+        },
+
+        // Get selected item data for drag operations
+        getSelectedItemsData(): InvTypeDto[] {
+            return this.stagedItems.filter(item => 
+                this.selectedStagedItemIds.includes(item.typeId!)
+            );
         }
-        
     },
     getters: {
         stagedItemCount: (state) => state.stagedItems.length,
+        selectedItemCount: (state) => state.selectedStagedItemIds.length,
+        hasSelection: (state) => state.selectedStagedItemIds.length > 0,
+        // Helper to get selected items for display
+        selectedItems: (state) => state.stagedItems.filter(item => 
+            state.selectedStagedItemIds.includes(item.typeId!)
+        ),
     },
 });
 
@@ -115,15 +167,16 @@ export function useStagingStore_WithSync() {
 
 export function useStagingState() {
     const stagingStore = useStagingStore_WithSync();
-    
-    return {
-        // State properties
+      return {        // State properties
         searchString: stagingStore.searchString,
         selectedMarketGroupIds: stagingStore.selectedMarketGroupIds,
         stagedItems: stagingStore.stagedItems,
+        selectedStagedItemIds: stagingStore.selectedStagedItemIds,
         isLoading: stagingStore.isLoading,
         error: stagingStore.error,
-
+        isDragging: stagingStore.isDragging,
+        mouseDown: stagingStore.mouseDown,
+        dragStartPosition: stagingStore.dragStartPosition,
         
         // Actions
         addGroup: stagingStore.addGroup,
@@ -134,7 +187,24 @@ export function useStagingState() {
         syncWithMainState: stagingStore.syncWithMainState,
         fetchStagedItems: stagingStore.fetchStagedItems,
         
+        // Selection actions
+        selectItem: stagingStore.selectItem,
+        deselectItem: stagingStore.deselectItem,
+        toggleItemSelection: stagingStore.toggleItemSelection,
+        clearSelection: stagingStore.clearSelection,
+        selectSingleItem: stagingStore.selectSingleItem,
+        selectMultipleItems: stagingStore.selectMultipleItems,
+        isItemSelected: stagingStore.isItemSelected,
+        
+        // Drag actions
+        startDrag: stagingStore.startDrag,
+        endDrag: stagingStore.endDrag,
+        getSelectedItemsData: stagingStore.getSelectedItemsData,
+        
         // Getters
-        stagedItemCount: stagingStore.stagedItemCount
+        stagedItemCount: stagingStore.stagedItemCount,
+        selectedItemCount: stagingStore.selectedItemCount,
+        hasSelection: stagingStore.hasSelection,
+        selectedItems: stagingStore.selectedItems,
     };
 }
