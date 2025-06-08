@@ -43,8 +43,6 @@
 
         <!-- Items Grid -->
         <ul class="items" 
-            @dragover="handleDragOver" 
-            @drop="handleDrop"
             @click="handleBackgroundClick">
               <inv-type-slip 
                 v-for="item in stagingStore.stagedItems" 
@@ -75,7 +73,7 @@
                             :src="esiService.getBlueprintOriginalUrl(item.typeId)" 
                             alt="Item Icon" 
                             class="drag-preview__icon drag-preview__icon--stacked"
-                            :style="{ transform: `translate(${index * 4}px, ${index * 4}px)` }"
+                            :style="{ transform: `translate(${index * 3}px, ${index * 3}px)` }"
                         />
                     </div>
                     <span class="drag-preview__count">
@@ -127,6 +125,7 @@ export default defineComponent({
         InvTypeSlip
     },    watch: {
         'stagingStore.isDragging'(newValue: boolean) {
+            return; // No need to track drag state here, handled in mounted
             if (newValue) {
                 // Cache drag preview data once when drag starts to avoid reactive lookups
                 this.cachedDragPreviewData = {
@@ -136,7 +135,7 @@ export default defineComponent({
                 };
                 
                 this.startDragPreviewTracking();
-                
+                console.log('positioning');
                 // Wait for next tick to ensure DOM element exists, then position it
                 this.$nextTick(() => {
                     const dragPreview = document.querySelector('.drag-preview') as HTMLElement;
@@ -165,51 +164,6 @@ export default defineComponent({
             }
         },
         
-        handleDragOver(event: DragEvent) {
-            event.preventDefault();
-            // You can add visual feedback here for valid drop zones
-        },
-        
-        handleDrop(event: DragEvent) {
-            event.preventDefault();
-            
-            try {
-                // Handle drops from external sources or internal rearrangement
-                const jsonData = event.dataTransfer?.getData('application/json');
-                const invTypesData = event.dataTransfer?.getData('application/x-inv-types');
-                
-                if (invTypesData) {
-                    const droppedItems = JSON.parse(invTypesData);
-                    console.log('Dropped items:', droppedItems);
-                    
-                    // Handle the drop - this is where you'd implement your drop logic
-                    // For example, you might want to:
-                    // - Rearrange items
-                    // - Move items to a different container
-                    // - Process the dropped items in some way
-                    
-                    this.handleInternalDrop(droppedItems, event);
-                } else if (jsonData) {
-                    // Handle drops from external sources
-                    console.log('External drop:', JSON.parse(jsonData));
-                }
-            } catch (error) {
-                console.error('Error processing drop:', error);
-            }
-        },
-        
-        handleInternalDrop(droppedItems: any[], event: DragEvent) {
-            // This is where you'd implement your specific drop logic
-            // For now, just log the drop for debugging
-            console.log('Internal drop handled:', {
-                items: droppedItems,
-                position: { x: event.clientX, y: event.clientY }
-            });
-            
-            // Example: Clear selection after successful drop
-            // this.stagingStore.clearSelection();
-        },
-        
         // Keyboard shortcuts (optional enhancement)
         handleKeyDown(event: KeyboardEvent) {
             if (event.key === 'Escape') {
@@ -230,13 +184,15 @@ export default defineComponent({
         },        selectAllItems() {
             const allIds = this.stagingStore.stagedItems.map(item => item.typeId!);
             this.stagingStore.selectMultipleItems(allIds);
-        },        // Handle mouse movement for drag preview - optimized for performance
+        },
+        
+        // Handle mouse movement for drag preview - optimized for performance
         handleMouseMove(event: MouseEvent) {
             if (!this.stagingStore.isDragging) return;
             
             // Throttle mouse move events to 60fps max
             const now = performance.now();
-            if (now - this.lastMouseMoveTime < 16) return; // ~60fps
+            if (now - this.lastMouseMoveTime < 200) return; // ~60fps
             this.lastMouseMoveTime = now;
             
             // Use direct DOM manipulation for better performance

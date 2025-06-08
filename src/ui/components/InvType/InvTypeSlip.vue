@@ -1,15 +1,21 @@
 <template>
     <div class="inv-type-slip" :class="{
         'inv-type-slip--selected': isSelected,
-        'inv-type-slip--dragging': isDragging
-    }" :draggable="true" @click="handleClick" @mouseenter="processMouseEnter" @dragstart="handleDragStart"
-        @dragend="handleDragEnd">        <div class="inv-type-slip__icon">
+        'inv-type-slip--dragging': isSelected &&stagingStore.isDragging,
+    }" :draggable="true" @click="handleClick" @dragstart="handleDragStart" @dragend="handleDragEnd">
+        <div class="inv-type-slip__icon">
             <img :src="esiService.getBlueprintOriginalUrl(invType.typeId)" alt="Type Icon" />
         </div>
         <div class="inv-type-slip__name-wrapper">
             <div class="inv-type-slip__name">
                 {{ invType.typeName }}
             </div>
+        </div>
+    </div>
+    <!-- Drag preview element, positioned off-screen until needed -->
+    <div v-if="showDragPreview" ref="dragPreview" class="drag-preview drag-preview--hidden">
+        <div class="drag-preview__inner">
+            {{ stagingStore.selectedItemCount }} Items
         </div>
     </div>
 </template>
@@ -31,10 +37,10 @@ export default defineComponent({
             type: Boolean,
             default: false
         }
-    },
-    data() {
+    }, data() {
         return {
-            isDragging: false
+            isDragging: false,
+            showDragPreview: false
         };
     },
     computed: {
@@ -96,43 +102,36 @@ export default defineComponent({
                     this.stagingStore.selectMultipleItems(rangeIds);
                 }
             }
-        },
-
-        processMouseEnter() {
-            if (this.parentMouseDown) {
-                this.stagingStore.selectItem(this.invType.typeId!);
-            }
         }, handleDragStart(event: DragEvent) {
             this.isDragging = true;
+            this.stagingStore.isDragging = true;
 
             // Determine what items to drag
             const itemsToDrag = this.isSelected
                 ? this.stagingStore.getSelectedItemsData()
-                : [this.invType];            // If this item isn't selected but others are, select it for the drag
+                : [this.invType];
+
+            // If this item isn't selected but others are, select it for the drag
             if (!this.isSelected && this.stagingStore.hasSelection) {
                 this.stagingStore.selectItem(this.invType.typeId!);
-            }            // Hide the browser's default drag image by setting a transparent image
+            }
+
+            // Show the drag preview element and use it as the drag image
             if (event.dataTransfer) {
-                // Create a transparent image element and add it to DOM temporarily
-                const transparentImg = document.createElement('img');
-                transparentImg.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
-                transparentImg.style.position = 'absolute';
-                transparentImg.style.top = '-1000px';
-                transparentImg.style.left = '-1000px';
-                transparentImg.style.width = '1px';
-                transparentImg.style.height = '1px';
-                transparentImg.style.opacity = '0';
-                
-                // Add to DOM, set as drag image, then remove
-                document.body.appendChild(transparentImg);
-                event.dataTransfer.setDragImage(transparentImg, 0, 0);
-                
-                // Remove from DOM after a short delay
-                setTimeout(() => {
-                    if (transparentImg.parentNode) {
-                        transparentImg.parentNode.removeChild(transparentImg);
+                this.showDragPreview = true;
+
+                // Wait for the next tick to ensure the element is rendered
+                this.$nextTick(() => {
+                    const dragPreview = this.$refs.dragPreview as HTMLElement;
+                    if (dragPreview) {
+                        event.dataTransfer!.setDragImage(dragPreview, 0, 0);
+
+                        // Hide the preview after the drag image is captured
+                        setTimeout(() => {
+                            this.showDragPreview = false;
+                        }, 0);
                     }
-                }, 0);
+                });
             }
 
             // Prepare drag data
@@ -163,10 +162,10 @@ export default defineComponent({
             this.stagingStore.startDrag({ x: event.clientX, y: event.clientY });
 
             console.log(`Dragging ${itemsToDrag.length} items:`, dragData);
-        },
-
-        handleDragEnd() {
+        }, handleDragEnd() {
             this.isDragging = false;
+            this.showDragPreview = false;
+            this.stagingStore.isDragging = false;
             this.stagingStore.endDrag();
         }
     },
@@ -174,6 +173,41 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.drag-preview {
+    position: absolute;
+    pointer-events: none;
+    z-index: 1000;
+    padding: 0.25rem;
+}
+
+.drag-preview--hidden {
+    top: -1000px;
+    left: -1000px;
+}
+
+.drag-preview__inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(to right, var(--flame) 50%, var(--burnt-sienna) 95%);
+    color: var(--white);
+    font-size: 0.7rem;
+    width: 80px;
+    height: 30px;
+    border: 1px solid var(--burnt-sienna);
+    border-radius: 0.5rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    box-shadow:
+        1px 1px 3px 1px var(--mid-night),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    user-select: none;
+    font-weight: 600;
+    opacity: 0.9;
+    mix-blend-mode: plus-lighter;
+    position: relative;
+    overflow: hidden;
+}
+
 .inv-type-slip {
     position: relative;
     display: flex;
@@ -187,7 +221,8 @@ export default defineComponent({
     transition: all 0.15s ease;
     border: 1px solid var(--translucent-white-1);
     border-radius: 0.5rem;
-    overflow: hidden; /* Clip content to prevent images from poking out */
+    overflow: hidden;
+    will-change: transform, opacity;
 }
 
 .inv-type-slip::after {
@@ -202,7 +237,7 @@ export default defineComponent({
 
 .inv-type-slip:hover {
     color: var(--platinum);
-    transform: translateY(-1px);
+    /* transform: translateY(-1px); */
 }
 
 .inv-type-slip:hover::after {
@@ -256,7 +291,8 @@ export default defineComponent({
 }
 
 .inv-type-slip--dragging {
-    opacity: 0.6;
-    transform: rotate(2deg) scale(0.95);    z-index: 1000;
+    transform: rotate(2deg) translate(2px, -2px);
+    transition: transform 0.15s cubic-bezier(0.68, 0, 0.265, 1.2);
+    z-index: 1000;
 }
 </style>
