@@ -1,24 +1,24 @@
 <template>    <div class="inv-type-slip" :class="cssClasses" :draggable="isDraggable" @click="handleClick" @dragstart="handleDragStart" @dragend="handleDragEnd">
         <div class="inv-type-slip__icon">
             <img :src="esiService.getBlueprintOriginalUrl(invType.typeId)" alt="Type Icon" />
-        </div>
-        <div class="inv-type-slip__name-wrapper">
+        </div>        <div class="inv-type-slip__name-wrapper">
             <div class="inv-type-slip__name">
                 {{ invType.typeName }}
             </div>
+        </div>        <!-- Selection counter for default variant (staging items) -->
+        <div v-if="variant === 'default' && blueprintCount > 0" class="inv-type-slip__selection-counter">
+            {{ blueprintCount }}
         </div>
         
         <!-- Blueprint variant specific elements -->
-        <template v-if="variant === 'blueprint'">
-            <!-- Counter controls -->
-            <div v-if="showCounter" class="inv-type-slip__counter">
-                <button class="counter-btn counter-btn--decrease" @click.stop="handleDecreaseCount" 
-                        title="Decrease count">
+        <template v-if="variant === 'blueprint'"><!-- Counter controls -->
+            <div v-if="showCounter" class="inv-type-slip__counter">                <button class="counter-btn counter-btn--decrease" @click.stop="handleDecreaseCount($event)" 
+                        title="Decrease count (Ctrl+Click: -10, Shift+Click: affect all selected)">
                     −
                 </button>
-                <span class="counter-value">{{ count || 1 }}</span>
-                <button class="counter-btn counter-btn--increase" @click.stop="handleIncreaseCount" 
-                        title="Increase count">
+                <span class="counter-value" :class="animationClass">{{ count || 1 }}</span>
+                <button class="counter-btn counter-btn--increase" @click.stop="handleIncreaseCount($event)" 
+                        title="Increase count (Ctrl+Click: +10, Shift+Click: affect all selected)">
                     +
                 </button>
             </div>
@@ -43,6 +43,7 @@ import { defineComponent, type PropType } from "vue";
 import esiService from "@/services/esiService";
 import { type InvTypeDto } from "@api-client/models/inv-type-dto";
 import { useStagingState } from "@/stores/useStagingStore";
+import { useWorkshopState } from "@/stores/useWorkshopStore";
 
 /**
  * InvTypeSlip Component - Optimized for Performance
@@ -83,29 +84,34 @@ export default defineComponent({
             type: Boolean,
             default: true
         }
-    },
-    emits: ['increase-count', 'decrease-count', 'remove'],data() {
+    },    emits: ['increase-count', 'decrease-count', 'remove'],data() {
         return {
             isDragging: false,
-            showDragPreview: false
+            showDragPreview: false,
+            animationClass: '',
+            lastKnownCount: 0
         };
-    },    computed: {
+    },computed: {
         esiService() {
             return esiService;
-        },
-        stagingStore() {
+        },        stagingStore() {
             return useStagingState();
+        },
+        workshopStore() {
+            return useWorkshopState();
         },        isSelected(): boolean {
+            if (this.variant === 'blueprint') {
+                return this.workshopStore.isBlueprintSelected(this.invType.typeId!);
+            }
             return this.stagingStore.isItemSelected(this.invType.typeId!);
-        },        isDraggingThis(): boolean {
+        },isDraggingThis(): boolean {
             // Add a small performance optimization by caching this computation
             return this.isSelected && this.stagingStore.isDragging;
         },
         isDraggable(): boolean {
             // Blueprint variant is not draggable by default
             return this.variant !== 'blueprint';
-        },
-        cssClasses(): Record<string, boolean> {
+        },        cssClasses(): Record<string, boolean> {
             // Performance optimization: use configurable threshold for drag effects
             const threshold = this.stagingStore.performanceSettings.dragJuiceThreshold;
             const advancedEnabled = this.stagingStore.performanceSettings.enableAdvancedDragJuice;
@@ -118,29 +124,79 @@ export default defineComponent({
                 'inv-type-slip--dragging-simple': isDragging && (isLargeSelection || !advancedEnabled),
                 'inv-type-slip--blueprint': this.variant === 'blueprint',
             };
-        },
-        selectionIndex(): number {
+        },        selectionIndex(): number {
+            if (this.variant === 'blueprint') {
+                const index = this.workshopStore.selectedBlueprintIds.indexOf(this.invType.typeId!);
+                return index >= 0 ? index + 1 : 0;
+            }
             const index = this.stagingStore.selectedStagedItemIds.indexOf(this.invType.typeId!);
             return index >= 0 ? index + 1 : 0;
+        },        blueprintCount(): number {
+            const blueprint = this.workshopStore.getBlueprintById(this.invType.typeId!);
+            return blueprint ? blueprint.count : 0;
         }
     },
-    methods: {        handleClick(event: MouseEvent) {
+    
+    watch: {
+        count: {
+            handler(newCount, oldCount) {
+                if (this.variant === 'blueprint' && oldCount !== undefined && newCount !== oldCount) {
+                    this.triggerCountAnimation(newCount > oldCount);
+                }
+            },
+            immediate: false
+        }
+    },
+    
+    mounted() {
+        // Initialize the last known count to prevent initial animation
+        if (this.variant === 'blueprint') {
+            this.lastKnownCount = this.count || 1;
+        }
+    },
+    methods: {        // Counter animation method
+        triggerCountAnimation(isIncrease: boolean) {
+            // Clear any existing animation
+            this.animationClass = '';
+            
+            // Use requestAnimationFrame for better performance
+            requestAnimationFrame(() => {
+                this.animationClass = isIncrease ? 'counter-increase' : 'counter-decrease';
+                
+                // Clear animation class after animation completes
+                setTimeout(() => {
+                    this.animationClass = '';
+                }, 150); // Shorter duration for subtlety
+            });
+        },
+        
+        handleClick(event: MouseEvent) {
             event.preventDefault();
 
-            // Skip selection syncing for blueprint variant
             if (this.variant === 'blueprint') {
-                return;
-            }
-
-            if (event.ctrlKey || event.metaKey) {
-                // Multi-select mode: toggle this item
-                this.stagingStore.toggleItemSelection(this.invType.typeId!);
-            } else if (event.shiftKey && this.stagingStore.hasSelection) {
-                // Range select mode (optional enhancement)
-                this.handleRangeSelect();
+                // Blueprint selection logic
+                if (event.ctrlKey || event.metaKey) {
+                    // Multi-select mode: toggle this blueprint
+                    this.workshopStore.toggleBlueprintSelection(this.invType.typeId!);
+                } else if (event.shiftKey && this.workshopStore.hasSelection) {
+                    // Range select mode
+                    this.handleBlueprintRangeSelect();
+                } else {
+                    // Single select mode: clear others and select this one
+                    this.workshopStore.selectSingleBlueprint(this.invType.typeId!);
+                }
             } else {
-                // Single select mode: clear others and select this one
-                this.stagingStore.selectSingleItem(this.invType.typeId!);
+                // Staging item selection logic
+                if (event.ctrlKey || event.metaKey) {
+                    // Multi-select mode: toggle this item
+                    this.stagingStore.toggleItemSelection(this.invType.typeId!);
+                } else if (event.shiftKey && this.stagingStore.hasSelection) {
+                    // Range select mode (optional enhancement)
+                    this.handleRangeSelect();
+                } else {
+                    // Single select mode: clear others and select this one
+                    this.stagingStore.selectSingleItem(this.invType.typeId!);
+                }
             }
         },
 
@@ -167,12 +223,42 @@ export default defineComponent({
                     // Select all items in the range
                     const rangeIds = allItems
                         .slice(startIndex, endIndex + 1)
-                        .map(item => item.typeId!);
-
-                    this.stagingStore.selectMultipleItems(rangeIds);
+                        .map(item => item.typeId!);                    this.stagingStore.selectMultipleItems(rangeIds);
                 }
             }
-        }, handleDragStart(event: DragEvent) {
+        },
+
+        handleBlueprintRangeSelect() {
+            // Find the range between the last selected blueprint and this one
+            const allBlueprints = this.workshopStore.sortedBlueprints;
+            const currentIndex = allBlueprints.findIndex(bp => bp.typeId === this.invType.typeId);
+            const selectedIds = this.workshopStore.selectedBlueprintIds;
+
+            if (selectedIds.length > 0) {
+                // Find the index of the last selected blueprint
+                let lastSelectedIndex = -1;
+                for (let i = allBlueprints.length - 1; i >= 0; i--) {
+                    if (selectedIds.includes(allBlueprints[i].typeId!)) {
+                        lastSelectedIndex = i;
+                        break;
+                    }
+                }
+
+                if (lastSelectedIndex >= 0) {
+                    const startIndex = Math.min(currentIndex, lastSelectedIndex);
+                    const endIndex = Math.max(currentIndex, lastSelectedIndex);
+
+                    // Select all blueprints in the range
+                    const rangeIds = allBlueprints
+                        .slice(startIndex, endIndex + 1)
+                        .map(bp => bp.typeId!);
+
+                    this.workshopStore.selectMultipleBlueprints(rangeIds);
+                }
+            }
+        },
+
+        handleDragStart(event: DragEvent) {
             this.isDragging = true;
             this.stagingStore.isDragging = true;
 
@@ -237,15 +323,29 @@ export default defineComponent({
             this.showDragPreview = false;
             this.stagingStore.isDragging = false;
             this.stagingStore.endDrag();
+        },        // Blueprint variant methods
+        handleIncreaseCount(event: MouseEvent) {
+            const increment = event.ctrlKey || event.metaKey ? 10 : 1;
+            
+            if (event.shiftKey && this.workshopStore.hasSelection && this.workshopStore.isBlueprintSelected(this.invType.typeId!)) {
+                // Shift+click: affect all selected blueprints
+                this.workshopStore.increaseSelectedBlueprintsCount(increment);
+            } else {
+                // Normal click: affect only this blueprint
+                this.$emit('increase-count', this.invType.typeId, increment);
+            }
         },
 
-        // Blueprint variant methods
-        handleIncreaseCount() {
-            this.$emit('increase-count', this.invType.typeId);
-        },
-
-        handleDecreaseCount() {
-            this.$emit('decrease-count', this.invType.typeId);
+        handleDecreaseCount(event: MouseEvent) {
+            const decrement = event.ctrlKey || event.metaKey ? 10 : 1;
+            
+            if (event.shiftKey && this.workshopStore.hasSelection && this.workshopStore.isBlueprintSelected(this.invType.typeId!)) {
+                // Shift+click: affect all selected blueprints
+                this.workshopStore.decreaseSelectedBlueprintsCount(decrement);
+            } else {
+                // Normal click: affect only this blueprint
+                this.$emit('decrease-count', this.invType.typeId, decrement);
+            }
         },
 
         handleRemove() {
@@ -502,6 +602,52 @@ export default defineComponent({
     min-width: 18px;
     text-align: center;
     user-select: none;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.15s ease;
+    will-change: transform;
+}
+
+/* Counter animation classes */
+.counter-increase {
+    animation: counterPulseUp 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    color: var(--turquoise);
+}
+
+.counter-decrease {
+    animation: counterPulseDown 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    color: var(--flame);
+}
+
+/* Counter animations - more subtle for rapid clicks */
+@keyframes counterPulseUp {
+    0% {
+        transform: scale(1);
+        color: var(--platinum);
+    }
+    50% {
+        transform: scale(1.15) translateY(-1px);
+        color: var(--turquoise);
+        text-shadow: 0 0 3px rgba(64, 224, 208, 0.5);
+    }
+    100% {
+        transform: scale(1);
+        color: var(--turquoise);
+    }
+}
+
+@keyframes counterPulseDown {
+    0% {
+        transform: scale(1);
+        color: var(--platinum);
+    }
+    50% {
+        transform: scale(1.15) translateY(-1px);
+        color: var(--flame);
+        text-shadow: 0 0 3px rgba(235, 94, 40, 0.5);
+    }
+    100% {
+        transform: scale(1);
+        color: var(--flame);
+    }
 }
 
 /* Remove button styling */
@@ -546,5 +692,26 @@ export default defineComponent({
 
 .inv-type-slip__remove:active::after {
     box-shadow: 0 0 3px 3px var(--turquoise) inset;
+}
+
+/* Selection counter styling for default variant */
+.inv-type-slip__selection-counter {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    background-color: var(--flame);
+    color: var(--white);
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    user-select: none;
+    z-index: 2;
 }
 </style>

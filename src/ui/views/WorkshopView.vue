@@ -1,8 +1,29 @@
 <template>
     <div class="main-view">        <div class="workshop-wrapper">            <div class="blueprints column" 
                  :class="{ 'blueprints--drag-over': workshopStore.isDragOver }" @drop="handleDrop"
-                 @dragover.prevent="handleDragOver" @dragenter.prevent="handleDragEnter"
-                 @dragleave="handleDragLeave">
+                 @dragover.prevent="handleDragOver" @dragenter.prevent="handleDragEnter"                 @dragleave="handleDragLeave">
+                <!-- Selection Info Bar -->
+                <div v-if="workshopStore.hasSelection" class="selection-info">
+                    <div class="selection-info__content">
+                        <span class="selection-info__count">
+                            {{ workshopStore.selectedBlueprintCount }} blueprint{{ workshopStore.selectedBlueprintCount !== 1 ? 's' : '' }} selected
+                        </span>
+                        <div class="selection-info__preview">
+                            <span v-for="(blueprint, index) in previewBlueprints" :key="blueprint.typeId" class="selection-info__item">
+                                {{ blueprint.typeName }}{{ index < previewBlueprints.length - 1 ? ', ' : '' }}
+                            </span>
+                            <span v-if="workshopStore.selectedBlueprintCount > 3" class="selection-info__more">
+                                and {{ workshopStore.selectedBlueprintCount - 3 }} more...
+                            </span>
+                        </div>
+                    </div>
+                    <div class="selection-info__actions">
+                        <button @click="clearSelection" class="selection-info__clear-btn">
+                            Clear Selection
+                        </button>
+                    </div>
+                </div>
+
                 <div class="column__content">
                     <div v-if="!workshopStore.hasBlueprints" class="drop-zone">
                         <div class="drop-zone__text">Drop your blueprints here</div>
@@ -59,9 +80,7 @@ export default defineComponent({
         return {
             // No local state needed - everything is in the store
         };
-    },
-    
-    computed: {
+    },      computed: {
         stagingStore() {
             return useStagingState();
         },
@@ -73,8 +92,15 @@ export default defineComponent({
         },
         esiService() {
             return esiService;
-        }
-    },    methods: {
+        },
+        previewBlueprints() {
+            // Show first 3 selected blueprints in the preview
+            return this.workshopStore.selectedBlueprints.slice(0, 3);
+        }    },    methods: {        
+        clearSelection() {
+            this.workshopStore.clearSelection();
+        },
+
         handleDragEnter(event: DragEvent) {
             event.preventDefault();
             this.workshopStore.incrementDragCounter();
@@ -129,14 +155,12 @@ export default defineComponent({
 
         removeBlueprint(typeId: number) {
             this.workshopStore.removeBlueprint(typeId);
+        },        increaseCount(typeId: number, amount: number = 1) {
+            this.workshopStore.increaseCount(typeId, amount);
         },
 
-        increaseCount(typeId: number) {
-            this.workshopStore.increaseCount(typeId);
-        },
-
-        decreaseCount(typeId: number) {
-            this.workshopStore.decreaseCount(typeId);
+        decreaseCount(typeId: number, amount: number = 1) {
+            this.workshopStore.decreaseCount(typeId, amount);
         },
     },
 });
@@ -272,5 +296,105 @@ export default defineComponent({
 .placeholder__text {
     font-size: 0.875rem;
     color: var(--gray);
+}
+
+/* Selection info bar styles */
+.selection-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: rgba(64, 224, 208, 0.05);
+    border: 1px solid var(--turquoise);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    margin: 0.5rem;
+    font-size: 0.7rem;
+    position: relative;
+    height: 2.75rem;
+    box-sizing: border-box;
+    transform: translateY(-0%);
+    transition: transform 0.15s ease, height 0.15s ease, opacity 0.15s ease, margin 0.15s ease;
+
+    @starting-style {
+        transform: translateY(-50%);
+        opacity: 0.9;
+        height: 0;
+        margin: 0;
+    }
+}
+
+.selection-info__content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.selection-info__count {
+    font-weight: bold;
+    color: var(--turquoise);
+    text-shadow: 0 0 0.5px currentColor;
+    display: block;
+    margin-bottom: 0.125rem;
+    line-height: 1;
+}
+
+.selection-info__preview {
+    color: var(--gray);
+    font-size: 0.7rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.selection-info__item {
+    font-weight: 500;
+}
+
+.selection-info__more {
+    font-style: italic;
+    color: var(--gray);
+}
+
+.selection-info__actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.selection-info__clear-btn {
+    background-color: var(--eerie-black);
+    color: var(--gray);
+    border: 1px solid var(--translucent-white-3);
+    padding: 0.25rem 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-size: 0.7rem;
+    transition: all 0.15s ease;
+    position: relative;
+    user-select: none;
+}
+
+.selection-info__clear-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 0px solid transparent;
+    pointer-events: none;
+    border-radius: 0.5rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.selection-info__clear-btn:hover {
+    color: var(--platinum);
+}
+
+.selection-info__clear-btn:hover::after {
+    border: 1px solid var(--turquoise);
+}
+
+.selection-info__clear-btn:active::after {
+    box-shadow: 0 0 3px 3px var(--turquoise) inset;
 }
 </style>

@@ -86,7 +86,6 @@ interface ImageOptions {
  * Service for interacting with EVE Online's ESI API
  */
 class EsiService {
-  private readonly baseUrl: string = 'https://images.evetech.net';
   
   constructor() {
     // Initialize service
