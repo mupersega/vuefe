@@ -1,17 +1,20 @@
-<template>    <div class="inv-type-slip" :class="cssClasses" :draggable="isDraggable" @click="handleClick" @dragstart="handleDragStart" @dragend="handleDragEnd">
-        <div class="inv-type-slip__icon">
-            <img :src="esiService.getBlueprintOriginalUrl(invType.typeId)" alt="Type Icon" />
-        </div>        <div class="inv-type-slip__name-wrapper">
-            <div class="inv-type-slip__name">
-                {{ invType.typeName }}
+<template>    <div class="inv-type-slip-wrapper" :class="{ 'inv-type-slip-wrapper--blueprint': variant === 'blueprint' }">
+        <div class="inv-type-slip" :class="cssClasses" :draggable="isDraggable" @click="handleClick" @dragstart="handleDragStart" @dragend="handleDragEnd">
+            <div class="inv-type-slip__icon">
+                <img :src="esiService.getBlueprintOriginalUrl(invType.typeId)" alt="Type Icon" />
+            </div>            <div class="inv-type-slip__name-wrapper">
+                <div class="inv-type-slip__name">
+                    {{ invType.typeName }}
+                </div>
+            </div>            <!-- Selection counter for default variant (staging items) -->
+            <div v-if="variant === 'default' && blueprintCount > 0" class="inv-type-slip__selection-counter">
+                {{ blueprintCount }}
             </div>
-        </div>        <!-- Selection counter for default variant (staging items) -->
-        <div v-if="variant === 'default' && blueprintCount > 0" class="inv-type-slip__selection-counter">
-            {{ blueprintCount }}
         </div>
         
-        <!-- Blueprint variant specific elements -->
-        <template v-if="variant === 'blueprint'"><!-- Counter controls -->
+        <!-- Blueprint variant actions section -->
+        <div v-if="variant === 'blueprint'" class="inv-type-slip-actions">
+            <!-- Counter controls -->
             <div v-if="showCounter" class="inv-type-slip__counter">                <button class="counter-btn counter-btn--decrease" @click.stop="handleDecreaseCount($event)" 
                         title="Decrease count (Ctrl+Click: -10, Shift+Click: affect all selected)">
                     −
@@ -28,7 +31,7 @@
                 title="Remove blueprint">
                 ×
             </button>
-        </template>
+        </div>
     </div>
     <!-- Drag preview element, positioned off-screen until needed -->
     <div v-if="showDragPreview" ref="dragPreview" class="drag-preview drag-preview--hidden">
@@ -391,6 +394,19 @@ export default defineComponent({
     overflow: hidden;
 }
 
+/* Wrapper for blueprint variant to contain card and actions */
+.inv-type-slip-wrapper {
+    display: contents; /* For default variant, wrapper doesn't affect layout */
+}
+
+.inv-type-slip-wrapper--blueprint {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0;
+    position: relative;
+}
+
 .inv-type-slip {
     position: relative;
     display: flex;
@@ -488,7 +504,6 @@ export default defineComponent({
 .inv-type-slip--dragging-simple {
     opacity: 0.5;
     transition: opacity 0.05s ease;
-    /* Minimal performance impact for large selections */
 }
 
 /* Blueprint variant styles */
@@ -499,9 +514,20 @@ export default defineComponent({
     align-items: center;
     gap: 0;
     padding: 0;
-    padding-right: 3rem; /* Make room for remove button and counter */
     min-width: 200px;
     position: relative;
+}
+
+/* Actions section for blueprint variant */
+.inv-type-slip-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    flex-shrink: 0;
+    border: none;
+    position: relative;
+    margin-top: 0; /* Actions sit below the card */
+    margin-right: 0.5rem; /* Push actions in from the right edge */
 }
 
 .inv-type-slip--blueprint .inv-type-slip__icon {
@@ -517,16 +543,16 @@ export default defineComponent({
 .inv-type-slip--blueprint .inv-type-slip__name-wrapper {
     flex: 1;
     padding: 0;
-    align-items: flex-start;
+    align-items: center;
     justify-content: flex-start;
     text-align: left;
     padding-left: 0.5rem;
+    padding-top: 0.125rem; /* Slight offset towards top */
 }
 
 .inv-type-slip--blueprint .inv-type-slip__name {
     font-size: 0.7rem;
-    color: var(--flame);
-    text-shadow: 0 0 0.5px currentColor;
+    color: var(--gray);
     font-weight: 500;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -535,29 +561,55 @@ export default defineComponent({
     text-align: left;
 }
 
+.inv-type-slip--blueprint.inv-type-slip--selected .inv-type-slip__name {
+    color: var(--flame);
+    text-shadow: 0 0 0.5px currentColor;
+}
+
 /* Counter styling */
 .inv-type-slip__counter {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.125rem;
     flex-shrink: 0;
+    background-color: var(--translucent-white-03);
+    border: 1px solid var(--translucent-white-1);
+    border-top: none; /* Remove top border for cleaner connection */
+    border-radius: 0 0 0.375rem 0.375rem; /* Only bottom corners rounded */
+    padding: 0.25rem 0.375rem;
+    user-select: none;
+    transition: all 0.15s ease;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    position: relative;
+}
+
+/* Counter container hover effect, similar to custom components */
+.inv-type-slip__counter::after {
+    content: '';
     position: absolute;
-    bottom: 0.25rem;
-    right: 0.25rem;
+    inset: 0;
+    border: 0px solid transparent;
+    pointer-events: none;
+    border-radius: 0 0 0.375rem 0.375rem; /* Match parent border radius */
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.inv-type-slip__counter:hover::after {
+    border: 1px solid var(--turquoise);
 }
 
 .counter-btn {
-    background-color: var(--eerie-black);
+    background-color: transparent;
     color: var(--gray);
-    border: 1px solid var(--translucent-white-1);
+    border: 1px solid var(--translucent-white-3);
     border-radius: 0.25rem;
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     font-weight: bold;
     transition: all 0.15s ease;
     user-select: none;
@@ -576,7 +628,7 @@ export default defineComponent({
 
 .counter-btn:hover {
     color: var(--platinum);
-    background-color: var(--jet);
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 .counter-btn:hover::after {
@@ -596,14 +648,16 @@ export default defineComponent({
 }
 
 .counter-value {
-    font-size: 0.7rem;
-    color: var(--platinum);
-    font-weight: 500;
-    min-width: 18px;
+    font-size: 0.6rem;
+    color: var(--flame);
+    text-shadow: 0 0 0.5px currentColor;
+    font-weight: 600;
+    min-width: 16px;
     text-align: center;
     user-select: none;
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.15s ease;
     will-change: transform;
+    padding: 0 0.125rem;
 }
 
 /* Counter animation classes */
@@ -652,12 +706,13 @@ export default defineComponent({
 
 /* Remove button styling */
 .inv-type-slip__remove {
-    background-color: var(--eerie-black);
+    background-color: var(--translucent-white-03);
     color: var(--gray);
     border: 1px solid var(--translucent-white-1);
-    border-radius: 0.5rem;
-    width: 24px;
-    height: 24px;
+    border-top: none; /* Remove top border for cleaner connection */
+    border-radius: 0 0 0.375rem 0.375rem; /* Only bottom corners rounded */
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -666,10 +721,9 @@ export default defineComponent({
     font-weight: bold;
     transition: all 0.15s ease;
     flex-shrink: 0;
-    position: absolute;
-    top: 0.25rem;
-    right: 0.25rem;
     user-select: none;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    position: relative;
 }
 
 .inv-type-slip__remove::after {
@@ -678,12 +732,13 @@ export default defineComponent({
     inset: 0;
     border: 0px solid transparent;
     pointer-events: none;
-    border-radius: 0.5rem;
+    border-radius: 0 0 0.375rem 0.375rem; /* Match parent border radius */
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .inv-type-slip__remove:hover {
     color: var(--platinum);
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 .inv-type-slip__remove:hover::after {
