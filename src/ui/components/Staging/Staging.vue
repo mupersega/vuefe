@@ -103,8 +103,6 @@ export default defineComponent({
                 items: any[];
                 isSingle: boolean;
             } | null,
-            // Throttle mouse move events for better performance
-            lastMouseMoveTime: 0
         };
     },
     computed: {
@@ -123,34 +121,6 @@ export default defineComponent({
         }
     },    components: {
         InvTypeSlip
-    },    watch: {
-        'stagingStore.isDragging'(newValue: boolean) {
-            return; // No need to track drag state here, handled in mounted
-            if (newValue) {
-                // Cache drag preview data once when drag starts to avoid reactive lookups
-                this.cachedDragPreviewData = {
-                    count: this.stagingStore.selectedItemCount,
-                    items: this.stagingStore.selectedItems.slice(0, 3), // Only cache what we need
-                    isSingle: this.stagingStore.selectedItemCount === 1
-                };
-                
-                this.startDragPreviewTracking();
-                console.log('positioning');
-                // Wait for next tick to ensure DOM element exists, then position it
-                this.$nextTick(() => {
-                    const dragPreview = document.querySelector('.drag-preview') as HTMLElement;
-                    if (dragPreview) {
-                        const x = this.stagingStore.dragStartPosition.x + 10;
-                        const y = this.stagingStore.dragStartPosition.y - 40;
-                        dragPreview.style.left = `${x}px`;
-                        dragPreview.style.top = `${y}px`;
-                    }
-                });
-            } else {
-                this.stopDragPreviewTracking();
-                this.cachedDragPreviewData = null; // Clear cache
-            }
-        }
     },
     methods: {
         clearSelection() {
@@ -185,67 +155,6 @@ export default defineComponent({
             const allIds = this.stagingStore.stagedItems.map(item => item.typeId!);
             this.stagingStore.selectMultipleItems(allIds);
         },
-        
-        // Handle mouse movement for drag preview - optimized for performance
-        handleMouseMove(event: MouseEvent) {
-            if (!this.stagingStore.isDragging) return;
-            
-            // Throttle mouse move events to 60fps max
-            const now = performance.now();
-            if (now - this.lastMouseMoveTime < 200) return; // ~60fps
-            this.lastMouseMoveTime = now;
-            
-            // Use direct DOM manipulation for better performance
-            const dragPreview = document.querySelector('.drag-preview') as HTMLElement;
-            if (dragPreview) {
-                // Position drag preview above and to the right of cursor
-                const x = event.clientX + 10;
-                const y = event.clientY - 40; // Move up from cursor
-                dragPreview.style.left = `${x}px`;
-                dragPreview.style.top = `${y}px`;
-                
-                // Only update reactive data occasionally for debugging
-                if (this.debugDrag && Math.random() < 0.01) { // Only 1% of the time
-                    console.log('Mouse move - clientX:', event.clientX, 'clientY:', event.clientY);
-                }
-            }
-        },// Start tracking mouse for drag preview
-        startDragPreviewTracking() {
-            document.addEventListener('mousemove', this.handleMouseMove);
-            // Add event listener with passive: false to ensure it works during drag
-            document.addEventListener('dragover', this.handleDragMouseMove, { passive: false });
-            // Also listen for drag events globally
-            window.addEventListener('drag', this.handleDragMouseMove, { passive: false });
-        },
-
-        // Stop tracking mouse for drag preview
-        stopDragPreviewTracking() {
-            document.removeEventListener('mousemove', this.handleMouseMove);
-            document.removeEventListener('dragover', this.handleDragMouseMove);
-            window.removeEventListener('drag', this.handleDragMouseMove);
-        },        // Handle mouse movement during dragover events (more reliable during drag)
-        handleDragMouseMove(event: DragEvent) {
-            if (!this.stagingStore.isDragging) return;
-            
-            // Throttle drag move events too
-            const now = performance.now();
-            if (now - this.lastMouseMoveTime < 16) return; // ~60fps
-            this.lastMouseMoveTime = now;
-            
-            // Use direct DOM manipulation for better performance
-            const dragPreview = document.querySelector('.drag-preview') as HTMLElement;
-            if (dragPreview) {
-                // Position drag preview above and to the right of cursor
-                const x = event.clientX + 10;
-                const y = event.clientY - 40; // Move up from cursor
-                dragPreview.style.left = `${x}px`;
-                dragPreview.style.top = `${y}px`;
-                
-                if (this.debugDrag && Math.random() < 0.01) {
-                    console.log('Drag move - clientX:', event.clientX, 'clientY:', event.clientY);
-                }
-            }
-        },
     },
     
     mounted() {
@@ -254,9 +163,6 @@ export default defineComponent({
     },    beforeUnmount() {
         // Clean up event listeners
         document.removeEventListener('keydown', this.handleKeyDown);
-        document.removeEventListener('mousemove', this.handleMouseMove);
-        document.removeEventListener('dragover', this.handleDragMouseMove);
-        window.removeEventListener('drag', this.handleDragMouseMove);
     }
 });
 </script>

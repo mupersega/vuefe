@@ -1,8 +1,4 @@
-<template>
-    <div class="inv-type-slip" :class="{
-        'inv-type-slip--selected': isSelected,
-        'inv-type-slip--dragging': isSelected &&stagingStore.isDragging,
-    }" :draggable="true" @click="handleClick" @dragstart="handleDragStart" @dragend="handleDragEnd">
+<template>    <div class="inv-type-slip" :class="cssClasses" :draggable="isDraggable" @click="handleClick" @dragstart="handleDragStart" @dragend="handleDragEnd">
         <div class="inv-type-slip__icon">
             <img :src="esiService.getBlueprintOriginalUrl(invType.typeId)" alt="Type Icon" />
         </div>
@@ -11,6 +7,28 @@
                 {{ invType.typeName }}
             </div>
         </div>
+        
+        <!-- Blueprint variant specific elements -->
+        <template v-if="variant === 'blueprint'">
+            <!-- Counter controls -->
+            <div v-if="showCounter" class="inv-type-slip__counter">
+                <button class="counter-btn counter-btn--decrease" @click.stop="handleDecreaseCount" 
+                        title="Decrease count">
+                    −
+                </button>
+                <span class="counter-value">{{ count || 1 }}</span>
+                <button class="counter-btn counter-btn--increase" @click.stop="handleIncreaseCount" 
+                        title="Increase count">
+                    +
+                </button>
+            </div>
+            
+            <!-- Remove button -->
+            <button v-if="showRemove" class="inv-type-slip__remove" @click.stop="handleRemove"
+                title="Remove blueprint">
+                ×
+            </button>
+        </template>
     </div>
     <!-- Drag preview element, positioned off-screen until needed -->
     <div v-if="showDragPreview" ref="dragPreview" class="drag-preview drag-preview--hidden">
@@ -26,6 +44,18 @@ import esiService from "@/services/esiService";
 import { type InvTypeDto } from "@api-client/models/inv-type-dto";
 import { useStagingState } from "@/stores/useStagingStore";
 
+/**
+ * InvTypeSlip Component - Optimized for Performance
+ * 
+ * DRAG PERFORMANCE OPTIMIZATIONS:
+ * 1. Smart CSS class computation with performance thresholds
+ * 2. Minimal drag "juice" effect for large selections (>20 items)
+ * 3. GPU-accelerated properties (transform, opacity, filter)
+ * 4. Fast transitions (0.08s) to reduce animation overhead
+ * 5. Pre-computed cssClasses to reduce template reactivity
+ * 6. will-change hints for optimal layer management
+ */
+
 export default defineComponent({
     name: "InvTypeSlip",
     props: {
@@ -36,31 +66,71 @@ export default defineComponent({
         parentMouseDown: {
             type: Boolean,
             default: false
+        },
+        variant: {
+            type: String as PropType<'default' | 'blueprint'>,
+            default: 'default'
+        },
+        count: {
+            type: Number,
+            default: undefined
+        },
+        showCounter: {
+            type: Boolean,
+            default: true
+        },
+        showRemove: {
+            type: Boolean,
+            default: true
         }
-    }, data() {
+    },
+    emits: ['increase-count', 'decrease-count', 'remove'],data() {
         return {
             isDragging: false,
             showDragPreview: false
         };
-    },
-    computed: {
+    },    computed: {
         esiService() {
             return esiService;
         },
         stagingStore() {
             return useStagingState();
-        },
-        isSelected(): boolean {
+        },        isSelected(): boolean {
             return this.stagingStore.isItemSelected(this.invType.typeId!);
+        },        isDraggingThis(): boolean {
+            // Add a small performance optimization by caching this computation
+            return this.isSelected && this.stagingStore.isDragging;
+        },
+        isDraggable(): boolean {
+            // Blueprint variant is not draggable by default
+            return this.variant !== 'blueprint';
+        },
+        cssClasses(): Record<string, boolean> {
+            // Performance optimization: use configurable threshold for drag effects
+            const threshold = this.stagingStore.performanceSettings.dragJuiceThreshold;
+            const advancedEnabled = this.stagingStore.performanceSettings.enableAdvancedDragJuice;
+            const isDragging = this.isDraggingThis;
+            const isLargeSelection = this.stagingStore.selectedItemCount > threshold;
+            
+            return {
+                'inv-type-slip--selected': this.isSelected,
+                'inv-type-slip--dragging': isDragging && !isLargeSelection && advancedEnabled,
+                'inv-type-slip--dragging-simple': isDragging && (isLargeSelection || !advancedEnabled),
+                'inv-type-slip--blueprint': this.variant === 'blueprint',
+            };
         },
         selectionIndex(): number {
             const index = this.stagingStore.selectedStagedItemIds.indexOf(this.invType.typeId!);
             return index >= 0 ? index + 1 : 0;
         }
     },
-    methods: {
-        handleClick(event: MouseEvent) {
+    methods: {        handleClick(event: MouseEvent) {
             event.preventDefault();
+
+            // Skip selection syncing for blueprint variant
+            if (this.variant === 'blueprint') {
+                return;
+            }
 
             if (event.ctrlKey || event.metaKey) {
                 // Multi-select mode: toggle this item
@@ -162,11 +232,24 @@ export default defineComponent({
             this.stagingStore.startDrag({ x: event.clientX, y: event.clientY });
 
             console.log(`Dragging ${itemsToDrag.length} items:`, dragData);
-        }, handleDragEnd() {
+        },        handleDragEnd() {
             this.isDragging = false;
             this.showDragPreview = false;
             this.stagingStore.isDragging = false;
             this.stagingStore.endDrag();
+        },
+
+        // Blueprint variant methods
+        handleIncreaseCount() {
+            this.$emit('increase-count', this.invType.typeId);
+        },
+
+        handleDecreaseCount() {
+            this.$emit('decrease-count', this.invType.typeId);
+        },
+
+        handleRemove() {
+            this.$emit('remove', this.invType.typeId);
         }
     },
 });
@@ -220,9 +303,12 @@ export default defineComponent({
     cursor: pointer;
     transition: all 0.15s ease;
     border: 1px solid var(--translucent-white-1);
-    border-radius: 0.5rem;
-    overflow: hidden;
+    border-radius: 0.5rem;    overflow: hidden;
     will-change: transform, opacity;
+    /* Performance: Use transform3d to trigger hardware acceleration */
+    transform: translate3d(0, 0, 0);
+    /* Performance: Prevent layout thrashing */
+    contain: layout style paint;
 }
 
 .inv-type-slip::after {
@@ -291,8 +377,174 @@ export default defineComponent({
 }
 
 .inv-type-slip--dragging {
-    transform: rotate(2deg) translate(2px, -2px);
-    transition: transform 0.15s cubic-bezier(0.68, 0, 0.265, 1.2);
-    z-index: 1000;
+    transform: scale(0.95);
+    opacity: 0.7;
+    filter: brightness(0.8);
+    transition: transform 0.08s ease-out, opacity 0.08s ease-out, filter 0.08s ease-out;
+    will-change: transform, opacity, filter;
+    /* Optimized multi-property approach with faster transitions */
+}
+
+.inv-type-slip--dragging-simple {
+    opacity: 0.5;
+    transition: opacity 0.05s ease;
+    /* Minimal performance impact for large selections */
+}
+
+/* Blueprint variant styles */
+.inv-type-slip--blueprint {
+    width: auto;
+    height: 64px;
+    flex-direction: row;
+    align-items: center;
+    gap: 0;
+    padding: 0;
+    padding-right: 3rem; /* Make room for remove button and counter */
+    min-width: 200px;
+    position: relative;
+}
+
+.inv-type-slip--blueprint .inv-type-slip__icon {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    margin-top: 0;
+    border-top-left-radius: 0.5rem;
+    border-bottom-left-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.inv-type-slip--blueprint .inv-type-slip__name-wrapper {
+    flex: 1;
+    padding: 0;
+    align-items: flex-start;
+    justify-content: flex-start;
+    text-align: left;
+    padding-left: 0.5rem;
+}
+
+.inv-type-slip--blueprint .inv-type-slip__name {
+    font-size: 0.7rem;
+    color: var(--flame);
+    text-shadow: 0 0 0.5px currentColor;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.2;
+    text-align: left;
+}
+
+/* Counter styling */
+.inv-type-slip__counter {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex-shrink: 0;
+    position: absolute;
+    bottom: 0.25rem;
+    right: 0.25rem;
+}
+
+.counter-btn {
+    background-color: var(--eerie-black);
+    color: var(--gray);
+    border: 1px solid var(--translucent-white-1);
+    border-radius: 0.25rem;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.7rem;
+    font-weight: bold;
+    transition: all 0.15s ease;
+    user-select: none;
+    position: relative;
+}
+
+.counter-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 0px solid transparent;
+    pointer-events: none;
+    border-radius: 0.25rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.counter-btn:hover {
+    color: var(--platinum);
+    background-color: var(--jet);
+}
+
+.counter-btn:hover::after {
+    border: 1px solid var(--turquoise);
+}
+
+.counter-btn:active::after {
+    box-shadow: 0 0 2px 2px var(--turquoise) inset;
+}
+
+.counter-btn--increase:hover {
+    color: var(--turquoise);
+}
+
+.counter-btn--decrease:hover {
+    color: var(--flame);
+}
+
+.counter-value {
+    font-size: 0.7rem;
+    color: var(--platinum);
+    font-weight: 500;
+    min-width: 18px;
+    text-align: center;
+    user-select: none;
+}
+
+/* Remove button styling */
+.inv-type-slip__remove {
+    background-color: var(--eerie-black);
+    color: var(--gray);
+    border: 1px solid var(--translucent-white-1);
+    border-radius: 0.5rem;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: bold;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    user-select: none;
+}
+
+.inv-type-slip__remove::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 0px solid transparent;
+    pointer-events: none;
+    border-radius: 0.5rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.inv-type-slip__remove:hover {
+    color: var(--platinum);
+}
+
+.inv-type-slip__remove:hover::after {
+    border: 1px solid var(--turquoise);
+}
+
+.inv-type-slip__remove:active::after {
+    box-shadow: 0 0 3px 3px var(--turquoise) inset;
 }
 </style>

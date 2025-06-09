@@ -11,10 +11,14 @@ export const useStagingStore = defineStore("staging", {
         selectedStagedItemIds: [] as number[],
         isLoading: false,
         error: null as Error | null,
-        mouseDown: false,
-        // New state for drag functionality
+        mouseDown: false,        // New state for drag functionality
         isDragging: false,
         dragStartPosition: { x: 0, y: 0 },
+        // Performance configuration
+        performanceSettings: {
+            dragJuiceThreshold: 20, // Max items before using simple drag feedback
+            enableAdvancedDragJuice: true, // Allow users to disable completely
+        },
     }),
     actions: {        addGroup(marketGroupId: number) {
             if (!this.selectedMarketGroupIds.includes(marketGroupId)) {
@@ -200,11 +204,13 @@ export function useStagingState() {
         startDrag: stagingStore.startDrag,
         endDrag: stagingStore.endDrag,
         getSelectedItemsData: stagingStore.getSelectedItemsData,
-        
-        // Getters
+          // Getters
         stagedItemCount: stagingStore.stagedItemCount,
         selectedItemCount: stagingStore.selectedItemCount,
         hasSelection: stagingStore.hasSelection,
         selectedItems: stagingStore.selectedItems,
+        
+        // Performance settings
+        performanceSettings: stagingStore.performanceSettings,
     };
 }
