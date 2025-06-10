@@ -514,7 +514,9 @@ export default defineComponent({
     align-items: center;
     gap: 0;
     padding: 0;
-    min-width: 200px;
+    min-width: 120px; /* Minimum width for blueprint cards */
+    max-width: 280px;
+    width: 100%;
     position: relative;
 }
 
