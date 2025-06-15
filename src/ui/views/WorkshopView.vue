@@ -1,20 +1,22 @@
 <template>
-    <div class="main-view">        <div class="workshop-wrapper">            <div class="blueprints column" 
-                 :class="{ 'blueprints--drag-over': workshopStore.isDragOver }" @drop="handleDrop"
-                 @dragover.prevent="handleDragOver" @dragenter.prevent="handleDragEnter"                 @dragleave="handleDragLeave">
+    <div class="main-view">
+        <div class="workshop-wrapper">
+            <div class="products column" :class="{ 'products--drag-over': workshopStore.isDragOver }" @drop="handleDrop"
+                @dragover.prevent="handleDragOver" @dragenter.prevent="handleDragEnter" @dragleave="handleDragLeave">
                 <!-- Selection Info Bar -->
                 <div v-if="workshopStore.hasSelection" class="selection-info">
                     <div class="selection-info__content">
                         <span class="selection-info__count">
-                            {{ workshopStore.selectedBlueprintCount }} blueprint{{ workshopStore.selectedBlueprintCount !== 1 ? 's' : '' }} selected
+                            {{ workshopStore.selectedBlueprintCount }} item{{ workshopStore.selectedBlueprintCount !== 1
+                                ? 's' : '' }} selected
                         </span>
                         <div class="selection-info__preview">
-                            <span v-for="(blueprint, index) in previewBlueprints" :key="blueprint.typeId" class="selection-info__item">
-                                {{ blueprint.typeName }}{{ index < previewBlueprints.length - 1 ? ', ' : '' }}
-                            </span>
-                            <span v-if="workshopStore.selectedBlueprintCount > 3" class="selection-info__more">
-                                and {{ workshopStore.selectedBlueprintCount - 3 }} more...
-                            </span>
+                            <span v-for="(item, index) in previewBlueprints" :key="item.typeId"
+                                class="selection-info__item">
+                                {{ item.typeName }}{{ index < previewBlueprints.length - 1 ? ', ' : '' }} </span>
+                                    <span v-if="workshopStore.selectedBlueprintCount > 3" class="selection-info__more">
+                                        and {{ workshopStore.selectedBlueprintCount - 3 }} more...
+                                    </span>
                         </div>
                     </div>
                     <div class="selection-info__actions">
@@ -23,37 +25,24 @@
                         </button>
                     </div>
                 </div>
-
                 <div class="column__content">
                     <div v-if="!workshopStore.hasBlueprints" class="drop-zone">
-                        <div class="drop-zone__text">Drop your blueprints here</div>
+                        <div class="drop-zone__text">Drop your items here</div>
                         <div class="drop-zone__hint">Drag items from staging area</div>
-                    </div>                    <div v-else class="blueprints-list">
-                        <InvTypeSlip 
-                            v-for="blueprint in workshopStore.sortedBlueprints" 
-                            :key="blueprint.typeId" 
-                            :inv-type="blueprint"
-                            :count="blueprint.count"
-                            variant="blueprint"
-                            @increase-count="increaseCount"
-                            @decrease-count="decreaseCount"
-                            @remove="removeBlueprint"
-                        />
+                    </div>
+                    <div v-else class="products-list">
+                        <InvTypeSlip v-for="item in workshopStore.sortedBlueprints" :key="item.typeId" :inv-type="item"
+                            :count="item.count" variant="blueprint" @increase-count="increaseCount"
+                            @decrease-count="decreaseCount" @remove="removeBlueprint" />
                     </div>
                 </div>
-            </div>
-
-            <div class="products column">
-                <div class="column__content">
-                    <div class="placeholder">
-                        <div class="placeholder__text">Products of blueprints will appear here</div>
-                    </div>                </div>
             </div>
 
             <div class="materials column">
                 <div class="column__content">
                     <div class="placeholder">
                         <div class="placeholder__text">Required materials will appear here</div>
+                        <div class="placeholder__hint">Based on items added above</div>
                     </div>
                 </div>
             </div>
@@ -71,16 +60,16 @@ import InvTypeSlip from "@components/InvType/InvTypeSlip.vue";
 
 export default defineComponent({
     name: "WorkshopView",
-    
+
     components: {
         InvTypeSlip
     },
-    
+
     data() {
         return {
             // No local state needed - everything is in the store
         };
-    },      computed: {
+    }, computed: {
         stagingStore() {
             return useStagingState();
         },
@@ -92,11 +81,11 @@ export default defineComponent({
         },
         esiService() {
             return esiService;
-        },
-        previewBlueprints() {
-            // Show first 3 selected blueprints in the preview
+        }, previewBlueprints() {
+            // Show first 3 selected items in the preview
             return this.workshopStore.selectedBlueprints.slice(0, 3);
-        }    },    methods: {        
+        }
+    }, methods: {
         clearSelection() {
             this.workshopStore.clearSelection();
         },
@@ -137,12 +126,10 @@ export default defineComponent({
                 } else {
                     console.warn('No structured data found in drop event');
                     return;
-                }
-
-                // Add dropped items to blueprints list via store
+                }                // Add dropped items to workshop list via store
                 this.workshopStore.addBlueprints(droppedItems);
 
-                console.log(`Dropped ${droppedItems.length} blueprints:`, droppedItems);
+                console.log(`Dropped ${droppedItems.length} items:`, droppedItems);
 
                 // Optional: Remove items from staging store
                 // this.stagingStore.removeItems(droppedItems.map(item => item.typeId));
@@ -155,7 +142,7 @@ export default defineComponent({
 
         removeBlueprint(typeId: number) {
             this.workshopStore.removeBlueprint(typeId);
-        },        increaseCount(typeId: number, amount: number = 1) {
+        }, increaseCount(typeId: number, amount: number = 1) {
             this.workshopStore.increaseCount(typeId, amount);
         },
 
@@ -188,7 +175,7 @@ export default defineComponent({
     min-width: 200px;
 }
 
-.blueprints {
+.products {
     flex: 1.5;
 }
 
@@ -210,16 +197,16 @@ export default defineComponent({
     flex-direction: column;
 }
 
-/* Blueprints Column - Drop Zone Styling */
-.blueprints {
+/* Products Column - Drop Zone Styling */
+.products {
     position: relative;
 }
 
-.blueprints--drag-over {
+.products--drag-over {
     background-color: var(--turquoise-bg);
 }
 
-.blueprints--drag-over::after {
+.products--drag-over::after {
     border: 2px solid var(--turquoise);
     box-shadow: 0 0 8px var(--turquoise-glow);
 }
@@ -235,7 +222,7 @@ export default defineComponent({
     transition: all 0.15s ease;
 }
 
-.blueprints--drag-over .drop-zone {
+.products--drag-over .drop-zone {
     color: var(--turquoise);
     text-shadow: 0 0 0.5px currentColor;
 }
@@ -253,8 +240,8 @@ export default defineComponent({
     font-style: italic;
 }
 
-/* Blueprints List */
-.blueprints-list {
+/* Products List */
+.products-list {
     flex: 1;
     overflow-y: auto;
     display: grid;
@@ -265,20 +252,20 @@ export default defineComponent({
     scrollbar-color: var(--flame) var(--eerie-black);
 }
 
-.blueprints-list::-webkit-scrollbar {
+.products-list::-webkit-scrollbar {
     width: 6px;
 }
 
-.blueprints-list::-webkit-scrollbar-track {
+.products-list::-webkit-scrollbar-track {
     background: var(--eerie-black);
 }
 
-.blueprints-list::-webkit-scrollbar-thumb {
+.products-list::-webkit-scrollbar-thumb {
     background-color: var(--translucent-white-2);
     border-radius: 6px;
 }
 
-.blueprints-list::-webkit-scrollbar-thumb:hover {
+.products-list::-webkit-scrollbar-thumb:hover {
     background-color: var(--flame);
 }
 
@@ -298,6 +285,13 @@ export default defineComponent({
     color: var(--gray);
 }
 
+.placeholder__hint {
+    font-size: 0.75rem;
+    color: var(--gray);
+    font-style: italic;
+    margin-top: 0.25rem;
+}
+
 /* Selection info bar styles */
 .selection-info {
     display: flex;
@@ -314,13 +308,6 @@ export default defineComponent({
     box-sizing: border-box;
     transform: translateY(-0%);
     transition: transform 0.15s ease, height 0.15s ease, opacity 0.15s ease, margin 0.15s ease;
-
-    @starting-style {
-        transform: translateY(-50%);
-        opacity: 0.9;
-        height: 0;
-        margin: 0;
-    }
 }
 
 .selection-info__content {

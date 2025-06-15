@@ -1,113 +1,109 @@
 import type { InvTypeDto } from "@api-client/models/inv-type-dto";
 import { defineStore } from "pinia";
 
-export interface BlueprintWithCount extends InvTypeDto {
+export interface ProductWithCount extends InvTypeDto {
     count: number;
 }
 
 export const useWorkshopStore = defineStore("workshop", {
     state: () => ({
-        blueprints: [] as BlueprintWithCount[],
-        selectedBlueprintIds: [] as number[],
+        products: [] as ProductWithCount[],
+        selectedProductIds: [] as number[],
         isDragOver: false,
         dragCounter: 0,
         isLoading: false,
         error: null as Error | null,
     }),
-    
-    actions: {
-        // Blueprint management
-        addBlueprint(blueprint: InvTypeDto) {
-            const exists = this.blueprints.some(bp => bp.typeId === blueprint.typeId);
+      actions: {
+        // Product management
+        addProduct(product: InvTypeDto) {
+            const exists = this.products.some(p => p.typeId === product.typeId);
             if (!exists) {
-                this.blueprints.push({
-                    ...blueprint,
+                this.products.push({
+                    ...product,
                     count: 1
                 });
             }
         },
 
-        addBlueprints(blueprints: InvTypeDto[]) {
-            blueprints.forEach(blueprint => {
-                this.addBlueprint(blueprint);
+        addProducts(products: InvTypeDto[]) {
+            products.forEach(product => {
+                this.addProduct(product);
             });
         },
 
-        removeBlueprint(typeId: number) {
-            const index = this.blueprints.findIndex(bp => bp.typeId === typeId);
+        removeProduct(typeId: number) {
+            const index = this.products.findIndex(p => p.typeId === typeId);
             if (index !== -1) {
-                this.blueprints.splice(index, 1);
+                this.products.splice(index, 1);
             }
         },
 
-        clearBlueprints() {
-            this.blueprints = [];
-        },        // Count management
+        clearProducts() {
+            this.products = [];        },// Count management
         increaseCount(typeId: number, amount: number = 1) {
-            const blueprint = this.blueprints.find(bp => bp.typeId === typeId);
-            if (blueprint) {
-                blueprint.count = (blueprint.count || 1) + amount;
+            const product = this.products.find(p => p.typeId === typeId);
+            if (product) {
+                product.count = (product.count || 1) + amount;
             }
         },
 
         decreaseCount(typeId: number, amount: number = 1) {
-            const blueprint = this.blueprints.find(bp => bp.typeId === typeId);
-            if (blueprint) {
-                blueprint.count = Math.max(1, (blueprint.count || 1) - amount);
+            const product = this.products.find(p => p.typeId === typeId);
+            if (product) {
+                product.count = Math.max(1, (product.count || 1) - amount);
             }
         },        setCount(typeId: number, count: number) {
-            const blueprint = this.blueprints.find(bp => bp.typeId === typeId);
-            if (blueprint) {
-                blueprint.count = Math.max(1, count);
+            const product = this.products.find(p => p.typeId === typeId);
+            if (product) {
+                product.count = Math.max(1, count);
+            }
+        },        // Selection management
+        selectProduct(typeId: number) {
+            if (!this.selectedProductIds.includes(typeId)) {
+                this.selectedProductIds.push(typeId);
             }
         },
 
-        // Selection management
-        selectBlueprint(typeId: number) {
-            if (!this.selectedBlueprintIds.includes(typeId)) {
-                this.selectedBlueprintIds.push(typeId);
-            }
+        deselectProduct(typeId: number) {
+            this.selectedProductIds = this.selectedProductIds.filter(id => id !== typeId);
         },
 
-        deselectBlueprint(typeId: number) {
-            this.selectedBlueprintIds = this.selectedBlueprintIds.filter(id => id !== typeId);
-        },
-
-        toggleBlueprintSelection(typeId: number) {
-            if (this.selectedBlueprintIds.includes(typeId)) {
-                this.deselectBlueprint(typeId);
+        toggleProductSelection(typeId: number) {
+            if (this.selectedProductIds.includes(typeId)) {
+                this.deselectProduct(typeId);
             } else {
-                this.selectBlueprint(typeId);
+                this.selectProduct(typeId);
             }
         },
 
         clearSelection() {
-            this.selectedBlueprintIds = [];
+            this.selectedProductIds = [];
         },
 
-        selectSingleBlueprint(typeId: number) {
-            this.selectedBlueprintIds = [typeId];
+        selectSingleProduct(typeId: number) {
+            this.selectedProductIds = [typeId];
         },
 
-        selectMultipleBlueprints(typeIds: number[]) {
+        selectMultipleProducts(typeIds: number[]) {
             // Add to existing selection
-            const newSelections = typeIds.filter(id => !this.selectedBlueprintIds.includes(id));
-            this.selectedBlueprintIds = [...this.selectedBlueprintIds, ...newSelections];
+            const newSelections = typeIds.filter(id => !this.selectedProductIds.includes(id));
+            this.selectedProductIds = [...this.selectedProductIds, ...newSelections];
         },
 
-        isBlueprintSelected(typeId: number): boolean {
-            return this.selectedBlueprintIds.includes(typeId);
+        isProductSelected(typeId: number): boolean {
+            return this.selectedProductIds.includes(typeId);
         },
 
-        // Batch count operations for selected blueprints
-        increaseSelectedBlueprintsCount(amount: number = 1) {
-            this.selectedBlueprintIds.forEach(typeId => {
+        // Batch count operations for selected products
+        increaseSelectedProductsCount(amount: number = 1) {
+            this.selectedProductIds.forEach(typeId => {
                 this.increaseCount(typeId, amount);
             });
         },
 
-        decreaseSelectedBlueprintsCount(amount: number = 1) {
-            this.selectedBlueprintIds.forEach(typeId => {
+        decreaseSelectedProductsCount(amount: number = 1) {
+            this.selectedProductIds.forEach(typeId => {
                 this.decreaseCount(typeId, amount);
             });
         },
@@ -132,15 +128,13 @@ export const useWorkshopStore = defineStore("workshop", {
         resetDragState() {
             this.isDragOver = false;
             this.dragCounter = 0;
+        },        // Utility methods
+        getProductById(typeId: number): ProductWithCount | undefined {
+            return this.products.find(p => p.typeId === typeId);
         },
 
-        // Utility methods
-        getBlueprintById(typeId: number): BlueprintWithCount | undefined {
-            return this.blueprints.find(bp => bp.typeId === typeId);
-        },
-
-        hasBlueprint(typeId: number): boolean {
-            return this.blueprints.some(bp => bp.typeId === typeId);
+        hasProduct(typeId: number): boolean {
+            return this.products.some(p => p.typeId === typeId);
         },
 
         // Error handling
@@ -150,22 +144,21 @@ export const useWorkshopStore = defineStore("workshop", {
 
         setLoading(isLoading: boolean) {
             this.isLoading = isLoading;
-        },
-    },    getters: {
-        blueprintCount: (state) => state.blueprints.length,
-        totalBlueprintCount: (state) => state.blueprints.reduce((total, bp) => total + bp.count, 0),
-        hasBlueprints: (state) => state.blueprints.length > 0,
+        },    },    getters: {
+        productCount: (state) => state.products.length,
+        totalProductCount: (state) => state.products.reduce((total: number, p: ProductWithCount) => total + p.count, 0),
+        hasProducts: (state) => state.products.length > 0,
         
         // Selection getters
-        selectedBlueprintCount: (state) => state.selectedBlueprintIds.length,
-        hasSelection: (state) => state.selectedBlueprintIds.length > 0,
-        selectedBlueprints: (state) => state.blueprints.filter(bp => 
-            state.selectedBlueprintIds.includes(bp.typeId!)
+        selectedProductCount: (state) => state.selectedProductIds.length,
+        hasSelection: (state) => state.selectedProductIds.length > 0,
+        selectedProducts: (state) => state.products.filter((p: ProductWithCount) => 
+            state.selectedProductIds.includes(p.typeId!)
         ),
         
-        // Get blueprints sorted by name
-        sortedBlueprints: (state) => {
-            return [...state.blueprints].sort((a, b) => 
+        // Get products sorted by name
+        sortedProducts: (state) => {
+            return [...state.products].sort((a: ProductWithCount, b: ProductWithCount) => 
                 (a.typeName || '').localeCompare(b.typeName || '')
             );
         },
@@ -178,18 +171,18 @@ export function useWorkshopState() {
     
     return {
         // State properties
-        blueprints: workshopStore.blueprints,
-        selectedBlueprintIds: workshopStore.selectedBlueprintIds,
+        products: workshopStore.products,
+        selectedProductIds: workshopStore.selectedProductIds,
         isDragOver: workshopStore.isDragOver,
         dragCounter: workshopStore.dragCounter,
         isLoading: workshopStore.isLoading,
         error: workshopStore.error,
         
         // Actions
-        addBlueprint: workshopStore.addBlueprint,
-        addBlueprints: workshopStore.addBlueprints,
-        removeBlueprint: workshopStore.removeBlueprint,
-        clearBlueprints: workshopStore.clearBlueprints,
+        addProduct: workshopStore.addProduct,
+        addProducts: workshopStore.addProducts,
+        removeProduct: workshopStore.removeProduct,
+        clearProducts: workshopStore.clearProducts,
         
         // Count management
         increaseCount: workshopStore.increaseCount,
@@ -197,17 +190,17 @@ export function useWorkshopState() {
         setCount: workshopStore.setCount,
         
         // Selection management
-        selectBlueprint: workshopStore.selectBlueprint,
-        deselectBlueprint: workshopStore.deselectBlueprint,
-        toggleBlueprintSelection: workshopStore.toggleBlueprintSelection,
+        selectProduct: workshopStore.selectProduct,
+        deselectProduct: workshopStore.deselectProduct,
+        toggleProductSelection: workshopStore.toggleProductSelection,
         clearSelection: workshopStore.clearSelection,
-        selectSingleBlueprint: workshopStore.selectSingleBlueprint,
-        selectMultipleBlueprints: workshopStore.selectMultipleBlueprints,
-        isBlueprintSelected: workshopStore.isBlueprintSelected,
+        selectSingleProduct: workshopStore.selectSingleProduct,
+        selectMultipleProducts: workshopStore.selectMultipleProducts,
+        isProductSelected: workshopStore.isProductSelected,
         
         // Batch operations
-        increaseSelectedBlueprintsCount: workshopStore.increaseSelectedBlueprintsCount,
-        decreaseSelectedBlueprintsCount: workshopStore.decreaseSelectedBlueprintsCount,
+        increaseSelectedProductsCount: workshopStore.increaseSelectedProductsCount,
+        decreaseSelectedProductsCount: workshopStore.decreaseSelectedProductsCount,
         
         // Drag state management
         setDragOver: workshopStore.setDragOver,
@@ -216,20 +209,44 @@ export function useWorkshopState() {
         resetDragState: workshopStore.resetDragState,
         
         // Utility methods
-        getBlueprintById: workshopStore.getBlueprintById,
-        hasBlueprint: workshopStore.hasBlueprint,
+        getProductById: workshopStore.getProductById,
+        hasProduct: workshopStore.hasProduct,
         
         // Error handling
         setError: workshopStore.setError,
         setLoading: workshopStore.setLoading,
         
         // Getters
-        blueprintCount: workshopStore.blueprintCount,
-        totalBlueprintCount: workshopStore.totalBlueprintCount,
-        hasBlueprints: workshopStore.hasBlueprints,
-        selectedBlueprintCount: workshopStore.selectedBlueprintCount,
+        productCount: workshopStore.productCount,
+        totalProductCount: workshopStore.totalProductCount,
+        hasProducts: workshopStore.hasProducts,
+        selectedProductCount: workshopStore.selectedProductCount,
         hasSelection: workshopStore.hasSelection,
-        selectedBlueprints: workshopStore.selectedBlueprints,
-        sortedBlueprints: workshopStore.sortedBlueprints,
+        selectedProducts: workshopStore.selectedProducts,
+        sortedProducts: workshopStore.sortedProducts,
+
+        // Legacy support - keep old blueprint names for compatibility
+        blueprints: workshopStore.products,
+        selectedBlueprintIds: workshopStore.selectedProductIds,
+        addBlueprint: workshopStore.addProduct,
+        addBlueprints: workshopStore.addProducts,
+        removeBlueprint: workshopStore.removeProduct,
+        clearBlueprints: workshopStore.clearProducts,
+        selectBlueprint: workshopStore.selectProduct,
+        deselectBlueprint: workshopStore.deselectProduct,
+        toggleBlueprintSelection: workshopStore.toggleProductSelection,
+        selectSingleBlueprint: workshopStore.selectSingleProduct,
+        selectMultipleBlueprints: workshopStore.selectMultipleProducts,
+        isBlueprintSelected: workshopStore.isProductSelected,
+        increaseSelectedBlueprintsCount: workshopStore.increaseSelectedProductsCount,
+        decreaseSelectedBlueprintsCount: workshopStore.decreaseSelectedProductsCount,
+        getBlueprintById: workshopStore.getProductById,
+        hasBlueprint: workshopStore.hasProduct,
+        blueprintCount: workshopStore.productCount,
+        totalBlueprintCount: workshopStore.totalProductCount,
+        hasBlueprints: workshopStore.hasProducts,
+        selectedBlueprintCount: workshopStore.selectedProductCount,
+        selectedBlueprints: workshopStore.selectedProducts,
+        sortedBlueprints: workshopStore.sortedProducts,
     };
 }
