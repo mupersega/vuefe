@@ -1,4 +1,4 @@
-# TypeNameDto
+# IndustryActivityMaterial
 
 
 ## Properties
@@ -6,16 +6,20 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **typeId** | **number** |  | [optional] [default to undefined]
-**typeName** | **string** |  | [default to undefined]
+**activityId** | **number** |  | [optional] [default to undefined]
+**materialTypeId** | **number** |  | [optional] [default to undefined]
+**quantity** | **number** |  | [optional] [default to undefined]
 
 ## Example
 
 ```typescript
-import { TypeNameDto } from './api';
+import { IndustryActivityMaterial } from './api';
 
-const instance: TypeNameDto = {
+const instance: IndustryActivityMaterial = {
     typeId,
-    typeName,
+    activityId,
+    materialTypeId,
+    quantity,
 };
 ```
 

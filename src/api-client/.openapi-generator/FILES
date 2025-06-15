@@ -2,6 +2,8 @@
 .npmignore
 api.ts
 api/blueprints-api.ts
+api/industry-activity-materials-api.ts
+api/industry-activity-products-api.ts
 api/inv-categories-api.ts
 api/inv-groups-api.ts
 api/inv-market-groups-api.ts
@@ -13,6 +15,10 @@ common.ts
 configuration.ts
 docs/BlueprintDto.md
 docs/BlueprintsApi.md
+docs/IndustryActivityMaterial.md
+docs/IndustryActivityMaterialsApi.md
+docs/IndustryActivityProduct.md
+docs/IndustryActivityProductsApi.md
 docs/InvCategoriesApi.md
 docs/InvCategoryDto.md
 docs/InvGroupDto.md
@@ -28,6 +34,8 @@ git_push.sh
 index.ts
 models/blueprint-dto.ts
 models/index.ts
+models/industry-activity-material.ts
+models/industry-activity-product.ts
 models/inv-category-dto.ts
 models/inv-group-dto.ts
 models/inv-type-dto.ts

@@ -15,6 +15,8 @@
 
 
 export * from './api/blueprints-api';
+export * from './api/industry-activity-materials-api';
+export * from './api/industry-activity-products-api';
 export * from './api/inv-categories-api';
 export * from './api/inv-groups-api';
 export * from './api/inv-market-groups-api';

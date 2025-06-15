@@ -13,8 +13,8 @@ export const useWorkshopStore = defineStore("workshop", {
         dragCounter: 0,
         isLoading: false,
         error: null as Error | null,
-    }),
-      actions: {
+    }),    
+    actions: {
         // Product management
         addProduct(product: InvTypeDto) {
             const exists = this.products.some(p => p.typeId === product.typeId);
@@ -40,7 +40,8 @@ export const useWorkshopStore = defineStore("workshop", {
         },
 
         clearProducts() {
-            this.products = [];        },// Count management
+            this.products = [];
+        },        // Count management
         increaseCount(typeId: number, amount: number = 1) {
             const product = this.products.find(p => p.typeId === typeId);
             if (product) {
@@ -53,7 +54,9 @@ export const useWorkshopStore = defineStore("workshop", {
             if (product) {
                 product.count = Math.max(1, (product.count || 1) - amount);
             }
-        },        setCount(typeId: number, count: number) {
+        },
+
+        setCount(typeId: number, count: number) {
             const product = this.products.find(p => p.typeId === typeId);
             if (product) {
                 product.count = Math.max(1, count);
@@ -144,21 +147,22 @@ export const useWorkshopStore = defineStore("workshop", {
 
         setLoading(isLoading: boolean) {
             this.isLoading = isLoading;
-        },    },    getters: {
+        },
+    },    getters: {
         productCount: (state) => state.products.length,
-        totalProductCount: (state) => state.products.reduce((total: number, p: ProductWithCount) => total + p.count, 0),
+        totalProductCount: (state) => state.products.reduce((total, p) => total + p.count, 0),
         hasProducts: (state) => state.products.length > 0,
         
         // Selection getters
         selectedProductCount: (state) => state.selectedProductIds.length,
         hasSelection: (state) => state.selectedProductIds.length > 0,
-        selectedProducts: (state) => state.products.filter((p: ProductWithCount) => 
+        selectedProducts: (state) => state.products.filter(p => 
             state.selectedProductIds.includes(p.typeId!)
         ),
         
         // Get products sorted by name
         sortedProducts: (state) => {
-            return [...state.products].sort((a: ProductWithCount, b: ProductWithCount) => 
+            return [...state.products].sort((a, b) => 
                 (a.typeName || '').localeCompare(b.typeName || '')
             );
         },
@@ -224,29 +228,5 @@ export function useWorkshopState() {
         hasSelection: workshopStore.hasSelection,
         selectedProducts: workshopStore.selectedProducts,
         sortedProducts: workshopStore.sortedProducts,
-
-        // Legacy support - keep old blueprint names for compatibility
-        blueprints: workshopStore.products,
-        selectedBlueprintIds: workshopStore.selectedProductIds,
-        addBlueprint: workshopStore.addProduct,
-        addBlueprints: workshopStore.addProducts,
-        removeBlueprint: workshopStore.removeProduct,
-        clearBlueprints: workshopStore.clearProducts,
-        selectBlueprint: workshopStore.selectProduct,
-        deselectBlueprint: workshopStore.deselectProduct,
-        toggleBlueprintSelection: workshopStore.toggleProductSelection,
-        selectSingleBlueprint: workshopStore.selectSingleProduct,
-        selectMultipleBlueprints: workshopStore.selectMultipleProducts,
-        isBlueprintSelected: workshopStore.isProductSelected,
-        increaseSelectedBlueprintsCount: workshopStore.increaseSelectedProductsCount,
-        decreaseSelectedBlueprintsCount: workshopStore.decreaseSelectedProductsCount,
-        getBlueprintById: workshopStore.getProductById,
-        hasBlueprint: workshopStore.hasProduct,
-        blueprintCount: workshopStore.productCount,
-        totalBlueprintCount: workshopStore.totalProductCount,
-        hasBlueprints: workshopStore.hasProducts,
-        selectedBlueprintCount: workshopStore.selectedProductCount,
-        selectedBlueprints: workshopStore.selectedProducts,
-        sortedBlueprints: workshopStore.sortedProducts,
     };
 }

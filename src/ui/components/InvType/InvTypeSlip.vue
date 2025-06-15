@@ -1,34 +1,41 @@
-<template>    <div class="inv-type-slip-wrapper" :class="{ 'inv-type-slip-wrapper--blueprint': variant === 'blueprint' }">
-        <div class="inv-type-slip" :class="cssClasses" :draggable="isDraggable" @click="handleClick" @dragstart="handleDragStart" @dragend="handleDragEnd">
+<template>
+    <div class="inv-type-slip-wrapper" :class="{ 'inv-type-slip-wrapper--product': variant === 'product' }">
+        <div class="inv-type-slip" :class="cssClasses" :draggable="isDraggable" @click="handleClick"
+            @dragstart="handleDragStart" @dragend="handleDragEnd">
             <div class="inv-type-slip__icon">
-                <img :src="esiService.getBlueprintOriginalUrl(invType.typeId)" alt="Type Icon" />
-            </div>            <div class="inv-type-slip__name-wrapper">
+                <!-- @ts-ignore Type coercion issue with null vs undefined -->
+                <img v-if="imageUrl" :src="imageUrl || ''" />
+                <div v-else class="inv-type-slip__icon-placeholder">
+                    📦
+                </div>
+            </div>
+            <div class="inv-type-slip__name-wrapper">
                 <div class="inv-type-slip__name">
                     {{ invType.typeName }}
                 </div>
-            </div>            <!-- Selection counter for default variant (staging items) -->
-            <div v-if="variant === 'default' && blueprintCount > 0" class="inv-type-slip__selection-counter">
-                {{ blueprintCount }}
+            </div> <!-- Selection counter for default variant (staging items) -->
+            <div v-if="variant === 'default' && productCount > 0" class="inv-type-slip__selection-counter">
+                {{ productCount }}
             </div>
         </div>
-        
-        <!-- Blueprint variant actions section -->
-        <div v-if="variant === 'blueprint'" class="inv-type-slip-actions">
+
+        <!-- product variant actions section -->
+        <div v-if="variant === 'product'" class="inv-type-slip-actions">
             <!-- Counter controls -->
-            <div v-if="showCounter" class="inv-type-slip__counter">                <button class="counter-btn counter-btn--decrease" @click.stop="handleDecreaseCount($event)" 
-                        title="Decrease count (Ctrl+Click: -10, Shift+Click: affect all selected)">
+            <div v-if="showCounter" class="inv-type-slip__counter"> <button class="counter-btn counter-btn--decrease"
+                    @click.stop="handleDecreaseCount($event)"
+                    title="Decrease count (Ctrl+Click: -10, Shift+Click: affect all selected)">
                     −
                 </button>
                 <span class="counter-value" :class="animationClass">{{ count || 1 }}</span>
-                <button class="counter-btn counter-btn--increase" @click.stop="handleIncreaseCount($event)" 
-                        title="Increase count (Ctrl+Click: +10, Shift+Click: affect all selected)">
+                <button class="counter-btn counter-btn--increase" @click.stop="handleIncreaseCount($event)"
+                    title="Increase count (Ctrl+Click: +10, Shift+Click: affect all selected)">
                     +
                 </button>
             </div>
-            
+
             <!-- Remove button -->
-            <button v-if="showRemove" class="inv-type-slip__remove" @click.stop="handleRemove"
-                title="Remove blueprint">
+            <button v-if="showRemove" class="inv-type-slip__remove" @click.stop="handleRemove" title="Remove product">
                 ×
             </button>
         </div>
@@ -72,7 +79,7 @@ export default defineComponent({
             default: false
         },
         variant: {
-            type: String as PropType<'default' | 'blueprint'>,
+            type: String as PropType<'default' | 'product'>,
             default: 'default'
         },
         count: {
@@ -87,106 +94,123 @@ export default defineComponent({
             type: Boolean,
             default: true
         }
-    },    emits: ['increase-count', 'decrease-count', 'remove'],data() {
+    }, emits: ['increase-count', 'decrease-count', 'remove'], data() {
         return {
             isDragging: false,
             showDragPreview: false,
             animationClass: '',
             lastKnownCount: 0
         };
-    },computed: {
+    }, computed: {
         esiService() {
             return esiService;
-        },        stagingStore() {
+        },        // Computed property for image URL with smart fallback
+        imageUrl(): string {
+            const typeId = this.invType.typeId;
+            if (!typeId) return '';
+
+            // Use different strategies based on variant
+            if (this.variant === 'product') {
+                // For product variant, prefer product images
+                const url = this.esiService.getBlueprintOriginalUrl(typeId);
+                return url || '';
+            } else {
+                // For default variant, prefer type icons
+                const url = this.esiService.getTypeIconUrl(typeId);
+                return url || '';
+            }
+        },
+
+        stagingStore() {
             return useStagingState();
         },
         workshopStore() {
             return useWorkshopState();
-        },        isSelected(): boolean {
-            if (this.variant === 'blueprint') {
-                return this.workshopStore.isBlueprintSelected(this.invType.typeId!);
+        }, isSelected(): boolean {
+            if (this.variant === 'product') {
+                return this.workshopStore.isProductSelected(this.invType.typeId!);
             }
             return this.stagingStore.isItemSelected(this.invType.typeId!);
-        },isDraggingThis(): boolean {
+        }, isDraggingThis(): boolean {
             // Add a small performance optimization by caching this computation
             return this.isSelected && this.stagingStore.isDragging;
         },
         isDraggable(): boolean {
-            // Blueprint variant is not draggable by default
-            return this.variant !== 'blueprint';
-        },        cssClasses(): Record<string, boolean> {
+            // product variant is not draggable by default
+            return this.variant !== 'product';
+        }, cssClasses(): Record<string, boolean> {
             // Performance optimization: use configurable threshold for drag effects
             const threshold = this.stagingStore.performanceSettings.dragJuiceThreshold;
             const advancedEnabled = this.stagingStore.performanceSettings.enableAdvancedDragJuice;
             const isDragging = this.isDraggingThis;
             const isLargeSelection = this.stagingStore.selectedItemCount > threshold;
-            
+
             return {
                 'inv-type-slip--selected': this.isSelected,
                 'inv-type-slip--dragging': isDragging && !isLargeSelection && advancedEnabled,
                 'inv-type-slip--dragging-simple': isDragging && (isLargeSelection || !advancedEnabled),
-                'inv-type-slip--blueprint': this.variant === 'blueprint',
+                'inv-type-slip--product': this.variant === 'product',
             };
-        },        selectionIndex(): number {
-            if (this.variant === 'blueprint') {
-                const index = this.workshopStore.selectedBlueprintIds.indexOf(this.invType.typeId!);
+        }, selectionIndex(): number {
+            if (this.variant === 'product') {
+                const index = this.workshopStore.selectedProductIds.indexOf(this.invType.typeId!);
                 return index >= 0 ? index + 1 : 0;
             }
             const index = this.stagingStore.selectedStagedItemIds.indexOf(this.invType.typeId!);
             return index >= 0 ? index + 1 : 0;
-        },        blueprintCount(): number {
-            const blueprint = this.workshopStore.getBlueprintById(this.invType.typeId!);
-            return blueprint ? blueprint.count : 0;
+        },
+
+        productCount(): number {
+            const product = this.workshopStore.getProductById(this.invType.typeId!);
+            return product ? product.count : 0;
         }
     },
-    
+
     watch: {
         count: {
             handler(newCount, oldCount) {
-                if (this.variant === 'blueprint' && oldCount !== undefined && newCount !== oldCount) {
+                if (this.variant === 'product' && oldCount !== undefined && newCount !== oldCount) {
                     this.triggerCountAnimation(newCount > oldCount);
                 }
             },
             immediate: false
         }
     },
-    
+
     mounted() {
         // Initialize the last known count to prevent initial animation
-        if (this.variant === 'blueprint') {
+        if (this.variant === 'product') {
             this.lastKnownCount = this.count || 1;
         }
-    },
-    methods: {        // Counter animation method
+    }, methods: {
+        // Counter animation method
         triggerCountAnimation(isIncrease: boolean) {
             // Clear any existing animation
             this.animationClass = '';
-            
+
             // Use requestAnimationFrame for better performance
             requestAnimationFrame(() => {
                 this.animationClass = isIncrease ? 'counter-increase' : 'counter-decrease';
-                
+
                 // Clear animation class after animation completes
                 setTimeout(() => {
                     this.animationClass = '';
                 }, 150); // Shorter duration for subtlety
             });
         },
-        
-        handleClick(event: MouseEvent) {
-            event.preventDefault();
 
-            if (this.variant === 'blueprint') {
-                // Blueprint selection logic
+        handleClick(event: MouseEvent) {
+            event.preventDefault(); if (this.variant === 'product') {
+                // Product selection logic
                 if (event.ctrlKey || event.metaKey) {
-                    // Multi-select mode: toggle this blueprint
-                    this.workshopStore.toggleBlueprintSelection(this.invType.typeId!);
+                    // Multi-select mode: toggle this product
+                    this.workshopStore.toggleProductSelection(this.invType.typeId!);
                 } else if (event.shiftKey && this.workshopStore.hasSelection) {
                     // Range select mode
-                    this.handleBlueprintRangeSelect();
+                    this.handleproductRangeSelect();
                 } else {
                     // Single select mode: clear others and select this one
-                    this.workshopStore.selectSingleBlueprint(this.invType.typeId!);
+                    this.workshopStore.selectSingleProduct(this.invType.typeId!);
                 }
             } else {
                 // Staging item selection logic
@@ -226,22 +250,22 @@ export default defineComponent({
                     // Select all items in the range
                     const rangeIds = allItems
                         .slice(startIndex, endIndex + 1)
-                        .map(item => item.typeId!);                    this.stagingStore.selectMultipleItems(rangeIds);
+                        .map(item => item.typeId!); this.stagingStore.selectMultipleItems(rangeIds);
                 }
             }
         },
 
-        handleBlueprintRangeSelect() {
-            // Find the range between the last selected blueprint and this one
-            const allBlueprints = this.workshopStore.sortedBlueprints;
-            const currentIndex = allBlueprints.findIndex(bp => bp.typeId === this.invType.typeId);
-            const selectedIds = this.workshopStore.selectedBlueprintIds;
+        handleproductRangeSelect() {
+            // Find the range between the last selected product and this one
+            const allproducts = this.workshopStore.sortedProducts;
+            const currentIndex = allproducts.findIndex(bp => bp.typeId === this.invType.typeId);
+            const selectedIds = this.workshopStore.selectedProductIds;
 
             if (selectedIds.length > 0) {
-                // Find the index of the last selected blueprint
+                // Find the index of the last selected product
                 let lastSelectedIndex = -1;
-                for (let i = allBlueprints.length - 1; i >= 0; i--) {
-                    if (selectedIds.includes(allBlueprints[i].typeId!)) {
+                for (let i = allproducts.length - 1; i >= 0; i--) {
+                    if (selectedIds.includes(allproducts[i].typeId!)) {
                         lastSelectedIndex = i;
                         break;
                     }
@@ -251,12 +275,12 @@ export default defineComponent({
                     const startIndex = Math.min(currentIndex, lastSelectedIndex);
                     const endIndex = Math.max(currentIndex, lastSelectedIndex);
 
-                    // Select all blueprints in the range
-                    const rangeIds = allBlueprints
+                    // Select all products in the range
+                    const rangeIds = allproducts
                         .slice(startIndex, endIndex + 1)
                         .map(bp => bp.typeId!);
 
-                    this.workshopStore.selectMultipleBlueprints(rangeIds);
+                    this.workshopStore.selectMultipleProducts(rangeIds);
                 }
             }
         },
@@ -321,32 +345,32 @@ export default defineComponent({
             this.stagingStore.startDrag({ x: event.clientX, y: event.clientY });
 
             console.log(`Dragging ${itemsToDrag.length} items:`, dragData);
-        },        handleDragEnd() {
+        }, handleDragEnd() {
             this.isDragging = false;
             this.showDragPreview = false;
             this.stagingStore.isDragging = false;
             this.stagingStore.endDrag();
-        },        // Blueprint variant methods
+        },        // product variant methods
         handleIncreaseCount(event: MouseEvent) {
             const increment = event.ctrlKey || event.metaKey ? 10 : 1;
-            
-            if (event.shiftKey && this.workshopStore.hasSelection && this.workshopStore.isBlueprintSelected(this.invType.typeId!)) {
-                // Shift+click: affect all selected blueprints
-                this.workshopStore.increaseSelectedBlueprintsCount(increment);
+
+            if (event.shiftKey && this.workshopStore.hasSelection && this.workshopStore.isProductSelected(this.invType.typeId!)) {
+                // Shift+click: affect all selected products
+                this.workshopStore.increaseSelectedProductsCount(increment);
             } else {
-                // Normal click: affect only this blueprint
+                // Normal click: affect only this product
                 this.$emit('increase-count', this.invType.typeId, increment);
             }
         },
 
         handleDecreaseCount(event: MouseEvent) {
             const decrement = event.ctrlKey || event.metaKey ? 10 : 1;
-            
-            if (event.shiftKey && this.workshopStore.hasSelection && this.workshopStore.isBlueprintSelected(this.invType.typeId!)) {
-                // Shift+click: affect all selected blueprints
-                this.workshopStore.decreaseSelectedBlueprintsCount(decrement);
+
+            if (event.shiftKey && this.workshopStore.hasSelection && this.workshopStore.isProductSelected(this.invType.typeId!)) {
+                // Shift+click: affect all selected products
+                this.workshopStore.decreaseSelectedProductsCount(decrement);
             } else {
-                // Normal click: affect only this blueprint
+                // Normal click: affect only this product
                 this.$emit('decrease-count', this.invType.typeId, decrement);
             }
         },
@@ -394,12 +418,13 @@ export default defineComponent({
     overflow: hidden;
 }
 
-/* Wrapper for blueprint variant to contain card and actions */
+/* Wrapper for product variant to contain card and actions */
 .inv-type-slip-wrapper {
-    display: contents; /* For default variant, wrapper doesn't affect layout */
+    display: contents;
+    /* For default variant, wrapper doesn't affect layout */
 }
 
-.inv-type-slip-wrapper--blueprint {
+.inv-type-slip-wrapper--product {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
@@ -419,7 +444,8 @@ export default defineComponent({
     cursor: pointer;
     transition: all 0.15s ease;
     border: 1px solid var(--translucent-white-1);
-    border-radius: 0.5rem;    overflow: hidden;
+    border-radius: 0.5rem;
+    overflow: hidden;
     will-change: transform, opacity;
     /* Performance: Use transform3d to trigger hardware acceleration */
     transform: translate3d(0, 0, 0);
@@ -464,6 +490,38 @@ export default defineComponent({
     object-fit: contain;
 }
 
+/* Handle missing/broken images */
+.inv-type-slip__icon img[src=""],
+.inv-type-slip__icon img:not([src]) {
+    display: none;
+}
+
+.inv-type-slip__icon img[src=""]:after,
+.inv-type-slip__icon img:not([src]):after {
+    content: "📦";
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: var(--gray);
+    opacity: 0.5;
+}
+
+/* Placeholder for when no image is available */
+.inv-type-slip__icon-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 2rem;
+    color: var(--gray);
+    opacity: 0.3;
+    user-select: none;
+}
+
 .inv-type-slip__name-wrapper {
     flex: 1;
     display: flex;
@@ -506,21 +564,22 @@ export default defineComponent({
     transition: opacity 0.05s ease;
 }
 
-/* Blueprint variant styles */
-.inv-type-slip--blueprint {
+/* product variant styles */
+.inv-type-slip--product {
     width: auto;
     height: 64px;
     flex-direction: row;
     align-items: center;
     gap: 0;
     padding: 0;
-    min-width: 120px; /* Minimum width for blueprint cards */
+    min-width: 120px;
+    /* Minimum width for product cards */
     max-width: 280px;
     width: 100%;
     position: relative;
 }
 
-/* Actions section for blueprint variant */
+/* Actions section for product variant */
 .inv-type-slip-actions {
     display: flex;
     align-items: center;
@@ -528,11 +587,13 @@ export default defineComponent({
     flex-shrink: 0;
     border: none;
     position: relative;
-    margin-top: 0; /* Actions sit below the card */
-    margin-right: 0.5rem; /* Push actions in from the right edge */
+    margin-top: 0;
+    /* Actions sit below the card */
+    margin-right: 0.5rem;
+    /* Push actions in from the right edge */
 }
 
-.inv-type-slip--blueprint .inv-type-slip__icon {
+.inv-type-slip--product .inv-type-slip__icon {
     width: 64px;
     height: 64px;
     flex-shrink: 0;
@@ -542,17 +603,18 @@ export default defineComponent({
     overflow: hidden;
 }
 
-.inv-type-slip--blueprint .inv-type-slip__name-wrapper {
+.inv-type-slip--product .inv-type-slip__name-wrapper {
     flex: 1;
     padding: 0;
     align-items: center;
     justify-content: flex-start;
     text-align: left;
     padding-left: 0.5rem;
-    padding-top: 0.125rem; /* Slight offset towards top */
+    padding-top: 0.125rem;
+    /* Slight offset towards top */
 }
 
-.inv-type-slip--blueprint .inv-type-slip__name {
+.inv-type-slip--product .inv-type-slip__name {
     font-size: 0.7rem;
     color: var(--gray);
     font-weight: 500;
@@ -563,7 +625,7 @@ export default defineComponent({
     text-align: left;
 }
 
-.inv-type-slip--blueprint.inv-type-slip--selected .inv-type-slip__name {
+.inv-type-slip--product.inv-type-slip--selected .inv-type-slip__name {
     color: var(--flame);
     text-shadow: 0 0 0.5px currentColor;
 }
@@ -576,12 +638,14 @@ export default defineComponent({
     flex-shrink: 0;
     background-color: var(--translucent-white-03);
     border: 1px solid var(--translucent-white-1);
-    border-top: none; /* Remove top border for cleaner connection */
-    border-radius: 0 0 0.375rem 0.375rem; /* Only bottom corners rounded */
+    border-top: none;
+    /* Remove top border for cleaner connection */
+    border-radius: 0 0 0.375rem 0.375rem;
+    /* Only bottom corners rounded */
     padding: 0.25rem 0.375rem;
     user-select: none;
     transition: all 0.15s ease;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     position: relative;
 }
 
@@ -592,7 +656,8 @@ export default defineComponent({
     inset: 0;
     border: 0px solid transparent;
     pointer-events: none;
-    border-radius: 0 0 0.375rem 0.375rem; /* Match parent border radius */
+    border-radius: 0 0 0.375rem 0.375rem;
+    /* Match parent border radius */
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -679,11 +744,13 @@ export default defineComponent({
         transform: scale(1);
         color: var(--platinum);
     }
+
     50% {
         transform: scale(1.15) translateY(-1px);
         color: var(--turquoise);
         text-shadow: 0 0 3px rgba(64, 224, 208, 0.5);
     }
+
     100% {
         transform: scale(1);
         color: var(--turquoise);
@@ -695,11 +762,13 @@ export default defineComponent({
         transform: scale(1);
         color: var(--platinum);
     }
+
     50% {
         transform: scale(1.15) translateY(-1px);
         color: var(--flame);
         text-shadow: 0 0 3px rgba(235, 94, 40, 0.5);
     }
+
     100% {
         transform: scale(1);
         color: var(--flame);
@@ -711,8 +780,10 @@ export default defineComponent({
     background-color: var(--translucent-white-03);
     color: var(--gray);
     border: 1px solid var(--translucent-white-1);
-    border-top: none; /* Remove top border for cleaner connection */
-    border-radius: 0 0 0.375rem 0.375rem; /* Only bottom corners rounded */
+    border-top: none;
+    /* Remove top border for cleaner connection */
+    border-radius: 0 0 0.375rem 0.375rem;
+    /* Only bottom corners rounded */
     width: 28px;
     height: 28px;
     display: flex;
@@ -724,7 +795,7 @@ export default defineComponent({
     transition: all 0.15s ease;
     flex-shrink: 0;
     user-select: none;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     position: relative;
 }
 
@@ -734,7 +805,8 @@ export default defineComponent({
     inset: 0;
     border: 0px solid transparent;
     pointer-events: none;
-    border-radius: 0 0 0.375rem 0.375rem; /* Match parent border radius */
+    border-radius: 0 0 0.375rem 0.375rem;
+    /* Match parent border radius */
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 

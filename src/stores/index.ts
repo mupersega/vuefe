@@ -1,4 +1,5 @@
 export { useGroupTree } from './useGroupTreeStore'
 export { useLayout } from './useLayoutStore'
 export { useWorkshopState } from './useWorkshopStore'
+export { useUnitStore } from './useUnitStore'
 export { registerPinia } from './registerPinia'

@@ -31,6 +31,6 @@ export interface TypeNameDto {
      * @type {string}
      * @memberof TypeNameDto
      */
-    'typeName'?: string | null;
+    'typeName': string | null;
 }
 

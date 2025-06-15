@@ -1,9 +1,18 @@
-
 /**
  * Service to interact with EVE Online ESI (EVE Swagger Interface) API
  * Primarily handles image server interactions initially
  * https://developers.eveonline.com/docs/services/image-server/
  */
+
+// Import the type-to-image mapping
+import typeImageMap from '../scripts/type-image-map.json';
+
+/**
+ * Interface for the image mapping structure
+ */
+interface ImageMapping {
+  [typeId: string]: string[];
+}
 
 /**
  * Types of images available from the EVE Image Server
@@ -86,12 +95,18 @@ interface ImageOptions {
  * Service for interacting with EVE Online's ESI API
  */
 class EsiService {
+  private imageMapping: ImageMapping;
   
   constructor() {
     // Initialize service
     console.log('ESI Service initialized');
+    
+    // Load the image mapping
+    this.imageMapping = typeImageMap as ImageMapping;
+    console.log(`Loaded image mappings for ${Object.keys(this.imageMapping).length} types`);
   }
-    /**
+
+  /**
    * Generate the URL for an EVE Online image
    * 
    * @param category - The category of image (alliance, character, corporation, etc.)
@@ -152,59 +167,61 @@ class EsiService {
     return url;
   }
     /**
-   * Get URL for type icon (generic inventory type image)
-   * 
+   * Get URL for blueprint original (BPO) image with intelligent fallback
+   * @param typeId - The type ID of the blueprint
+   * @param size - Optional size parameter
+   * @returns URL to the best available blueprint image
+   */
+  public getBlueprintOriginalUrl(typeId: number, size?: ImageSize): string | null {
+    // Prefer blueprint original, then blueprint copy, then icon as fallback
+    return this.getBestImageUrl(typeId, [
+      ImageVariation.BPO, 
+      ImageVariation.BPC, 
+      ImageVariation.Icon
+    ], { size });
+  }
+  
+  /**
+   * Get URL for blueprint copy (BPC) image with intelligent fallback
+   * @param typeId - The type ID of the blueprint
+   * @param size - Optional size parameter
+   * @returns URL to the best available blueprint image
+   */
+  public getBlueprintCopyUrl(typeId: number, size?: ImageSize): string | null {
+    // Prefer blueprint copy, then blueprint original, then icon as fallback
+    return this.getBestImageUrl(typeId, [
+      ImageVariation.BPC, 
+      ImageVariation.BPO, 
+      ImageVariation.Icon
+    ], { size });
+  }
+
+  /**
+   * Get URL for type icon with intelligent fallback
    * @param typeId - The type ID of the item
    * @param size - Optional size parameter
-   * @returns URL to the type icon
+   * @returns URL to the best available type image
    */
-  public getTypeIconUrl(typeId: number, size?: ImageSize): string {
-    return this.getImageUrl(ImageCategory.InventoryType, typeId, { 
-      variation: ImageVariation.Icon, 
-      size 
-    });
+  public getTypeIconUrl(typeId: number, size?: ImageSize): string | null {
+    // Prefer icon, then render as fallback
+    return this.getBestImageUrl(typeId, [
+      ImageVariation.Icon,
+      ImageVariation.Render
+    ], { size });
   }
   
   /**
-   * Get URL for rendered image of a ship or structure
-   * 
+   * Get URL for rendered image with intelligent fallback
    * @param typeId - The type ID of the ship or structure
    * @param size - Optional size parameter
-   * @returns URL to the rendered image
+   * @returns URL to the best available rendered image
    */
-  public getTypeRenderUrl(typeId: number, size?: ImageSize): string {
-    return this.getImageUrl(ImageCategory.InventoryType, typeId, { 
-      variation: ImageVariation.Render, 
-      size 
-    });
-  }
-  
-  /**
-   * Get URL for blueprint original (BPO) image
-   * 
-   * @param typeId - The type ID of the blueprint
-   * @param size - Optional size parameter
-   * @returns URL to the BPO image
-   */
-  public getBlueprintOriginalUrl(typeId: number, size?: ImageSize): string {
-    return this.getImageUrl(ImageCategory.InventoryType, typeId, { 
-      variation: ImageVariation.BPO, 
-      size 
-    });
-  }
-  
-  /**
-   * Get URL for blueprint copy (BPC) image
-   * 
-   * @param typeId - The type ID of the blueprint
-   * @param size - Optional size parameter
-   * @returns URL to the BPC image
-   */
-  public getBlueprintCopyUrl(typeId: number, size?: ImageSize): string {
-    return this.getImageUrl(ImageCategory.InventoryType, typeId, { 
-      variation: ImageVariation.BPC, 
-      size 
-    });
+  public getTypeRenderUrl(typeId: number, size?: ImageSize): string | null {
+    // Prefer render, then icon as fallback
+    return this.getBestImageUrl(typeId, [
+      ImageVariation.Render,
+      ImageVariation.Icon
+    ], { size });
   }
   
   /**
@@ -247,6 +264,61 @@ class EsiService {
     return this.getImageUrl(ImageCategory.Alliance, allianceId, { 
       variation: ImageVariation.Logo, 
       size 
+    });
+  }
+
+  /**
+   * Get available image variations for a given type ID
+   * @param typeId - The type ID to check
+   * @returns Array of available image variations, or empty array if none found
+   */
+  public getAvailableImageVariations(typeId: number): string[] {
+    return this.imageMapping[typeId.toString()] || [];
+  }
+
+  /**
+   * Check if a specific image variation is available for a type
+   * @param typeId - The type ID to check
+   * @param variation - The image variation to check for
+   * @returns true if the variation is available, false otherwise
+   */
+  public hasImageVariation(typeId: number, variation: ImageVariation): boolean {
+    const available = this.getAvailableImageVariations(typeId);
+    return available.includes(variation);
+  }
+
+  /**
+   * Get the best available image URL for a type with intelligent fallback
+   * @param typeId - The type ID
+   * @param preferredVariations - Array of variations in order of preference
+   * @param options - Optional parameters like size, tenant, etc.
+   * @returns URL to the best available image, or null if no images available
+   */
+  public getBestImageUrl(
+    typeId: number, 
+    preferredVariations: ImageVariation[] = [ImageVariation.Icon], 
+    options: ImageOptions = {}
+  ): string | null {
+    const availableVariations = this.getAvailableImageVariations(typeId);
+    
+    if (availableVariations.length === 0) {
+      return null;
+    }
+    
+    // Find the first preferred variation that's available
+    for (const preferred of preferredVariations) {
+      if (availableVariations.includes(preferred)) {
+        return this.getImageUrl(ImageCategory.InventoryType, typeId, {
+          ...options,
+          variation: preferred
+        });
+      }
+    }
+    
+    // If no preferred variations are available, use the first available one
+    return this.getImageUrl(ImageCategory.InventoryType, typeId, {
+      ...options,
+      variation: availableVariations[0] as ImageVariation
     });
   }
 }

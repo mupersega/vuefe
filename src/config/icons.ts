@@ -23,7 +23,13 @@ import {
     faFilter,
     faAnglesDown,
     faAnglesRight,
-    faCog
+    faCog,
+    faCogs,
+    faLink,
+    faTrashAlt,
+    faMap,
+    faImage,
+    faMapMarkedAlt,
 } from '@fortawesome/free-solid-svg-icons'
 
 const icons = [
@@ -48,7 +54,13 @@ const icons = [
     faFilter,
     faAnglesDown,
     faAnglesRight,
-    faCog
+    faCog,
+    faCogs,
+    faLink,
+    faTrashAlt,
+    faMap,
+    faImage,
+    faMapMarkedAlt
 ]
 
 library.add(...icons)

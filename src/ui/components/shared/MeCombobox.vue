@@ -14,6 +14,7 @@ interface MeComboboxProps {
   valueField: string;
   showSearchMode?: boolean;
   isStartsWith?: boolean;
+  openUpward?: boolean;
 }
 
 interface MeComboboxEmits {
@@ -53,10 +54,13 @@ const props: MeComboboxProps = defineProps({
   showSearchMode: {
     type: Boolean,
     default: false // Whether to show the search mode toggle
-  },
-  isStartsWith: {
+  },  isStartsWith: {
     type: Boolean,
     default: true // Whether to match from beginning (true) or anywhere (false)
+  },
+  openUpward: {
+    type: Boolean,
+    default: false // Whether to open the dropdown upward instead of downward
   }
 });
 
@@ -195,10 +199,10 @@ defineExpose({
       >
         {{ isStartsWith ? 'Aa...' : '...Aa...' }}
       </div>
-    </div>
-    <ul
+    </div>    <ul
       v-if="isDropdownVisible && items.length > 0"
       class="combobox-dropdown"
+      :class="{ 'combobox-dropdown--upward': openUpward }"
       role="listbox"
       :id="`combobox-listbox-${Date.now()}`" 
     >
@@ -214,8 +218,7 @@ defineExpose({
       >
         {{ item[props.labelField] }}
       </li>
-    </ul>
-    <div v-if="isDropdownVisible && items.length === 0 && inputValue" class="no-results">
+    </ul>    <div v-if="isDropdownVisible && items.length === 0 && inputValue" class="no-results" :class="{ 'no-results--upward': openUpward }">
       No results found.
     </div>
   </div>
@@ -308,6 +311,11 @@ defineExpose({
   box-shadow: 0 8px 16px rgba(0,0,0,0.2);
 }
 
+.combobox-dropdown--upward {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
 .combobox-item {
   padding: 0.25rem 0.75rem;
   cursor: pointer;
@@ -363,5 +371,10 @@ defineExpose({
   right: 0;
   z-index: 1000;
   box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+.no-results--upward {
+  top: auto;
+  bottom: calc(100% + 4px);
 }
 </style>
