@@ -103,6 +103,12 @@ class EsiService {
     
     // Load the image mapping
     this.imageMapping = typeImageMap as ImageMapping;
+    // clear imagemapping where the value is an empty array
+    for (const key in this.imageMapping) {
+      if (this.imageMapping[key].length === 0) {
+        delete this.imageMapping[key];
+      }
+    }
     console.log(`Loaded image mappings for ${Object.keys(this.imageMapping).length} types`);
   }
 
